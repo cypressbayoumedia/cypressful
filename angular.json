@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "myapp": {
+    "cypressful": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "myapp:build:production"
+              "buildTarget": "cypressful:build:production"
             },
             "development": {
-              "buildTarget": "myapp:build:development"
+              "buildTarget": "cypressful:build:development"
             }
           },
           "defaultConfiguration": "development"
