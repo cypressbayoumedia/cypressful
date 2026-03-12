@@ -23,8 +23,7 @@ Cypressful is a mobile-first, "headless dashboard" Progressive Web App (PWA) des
 3. **Integrated Contentful Service** capable of parsing dynamic content schemas based on the active Space and Environment.
 4. **Set up Firebase Callable function** (`processCommand`) utilizing Gemini 2.5 Flash to accept natural language alongside the schema to output Contentful SDK directives.
 5. **Mobile layout polish** incorporating responsive margins and fade animations for a polished feel.
+6. **Entry Management & Templates Integration**: Added an Entries Browser overlay, Templates popover, and interactive, inline entry editing cards inside the chat feed to manage Contentful records directly.
 
 ## Next Steps
-- Add API Keys for Contentful and Gemini to `environment.ts` and Firebase Functions secrets.
-- Enable end-to-end parsing by routing mapped Gemini intent objects out to the Contentful Service for actual asset/record `create` & `update` mutations.
-- Build Phase 5: Media Upload Pipeline.
+- Implement support for viewing and editing complex field types (Dates, Rich Text, References) within the entry cards.

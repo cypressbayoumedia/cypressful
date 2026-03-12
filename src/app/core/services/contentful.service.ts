@@ -17,6 +17,8 @@ export class ContentfulService {
   public contentTypes = signal<any[]>([]);
   public assets = signal<any[]>([]);
   public assetsLoading = signal<boolean>(false);
+  public entries = signal<any[]>([]);
+  public entriesLoading = signal<boolean>(false);
 
   constructor() {
     toObservable(this.configService.config).subscribe((configuration) => {
@@ -212,6 +214,42 @@ export class ContentfulService {
     
     console.log('Asset published successfully:', publishedAsset);
     return publishedAsset;
+  }
+
+  async fetchEntries(contentTypeId?: string, environment?: any) {
+    const env = environment || this.activeEnvironment();
+    if (!env) return;
+
+    this.entriesLoading.set(true);
+    try {
+      const query: any = {
+        limit: 100,
+        order: '-sys.updatedAt' // Notice the minus sign for descending
+      };
+      if (contentTypeId) {
+        query.content_type = contentTypeId;
+      }
+      const entryCollection = await env.getEntries(query);
+      this.entries.set(entryCollection.items);
+      console.log(`Loaded ${entryCollection.items.length} entries.`);
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+    } finally {
+      this.entriesLoading.set(false);
+    }
+  }
+
+  async getEntry(entryId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+    return env.getEntry(entryId);
+  }
+
+  async publishEntry(entryId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+    const entry = await env.getEntry(entryId);
+    return entry.publish();
   }
 
   async fetchAssets(environment?: any) {

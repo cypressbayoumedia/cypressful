@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { LowerCasePipe } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { VoiceService } from '../../core/services/voice.service';
 import { ContentfulService } from '../../core/services/contentful.service';
@@ -16,11 +17,14 @@ export interface ChatMessage {
     data: string;
     mimeType: string;
   };
+  type?: 'text' | 'entry-card';
+  cardData?: any;
+  cardContentType?: any;
 }
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, LowerCasePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +42,9 @@ export class Dashboard {
   public showSpaceMenu = signal<boolean>(false);
   public showModelsPanel = signal<boolean>(false);
   public showMediaPanel = signal<boolean>(false);
+  public showEntriesPanel = signal<boolean>(false);
+  public showTemplatesPopover = signal<boolean>(false);
+  public entryFilter = signal<string>('');
   public selectedAsset = signal<any | null>(null);
   public messageInput = signal<string>('');
   
@@ -84,6 +91,178 @@ export class Dashboard {
   openMediaPanel() {
     this.showMediaPanel.set(true);
     this.contentfulService.fetchAssets();
+  }
+
+  openEntriesPanel() {
+    this.showEntriesPanel.set(true);
+    this.contentfulService.fetchEntries();
+  }
+
+  get filteredEntries() {
+    return this.contentfulService.entries().filter((e: any) => {
+      if (!this.entryFilter()) return true;
+      return e.sys.contentType.sys.id === this.entryFilter();
+    });
+  }
+
+  getEntryStatus(entry: any): string {
+    if (entry.sys.archivedVersion) return 'Archived';
+    if (!entry.sys.publishedVersion) return 'Draft';
+    if (entry.sys.version > entry.sys.publishedVersion + 1) return 'Changed';
+    return 'Published';
+  }
+
+  toggleTemplates() {
+    this.showTemplatesPopover.set(!this.showTemplatesPopover());
+  }
+
+  selectTemplate(contentType: any) {
+    this.showTemplatesPopover.set(false);
+    
+    // create a blank entry object
+    const blankEntry = {
+      sys: { id: null, type: 'Entry', contentType: { sys: { id: contentType.sys.id } } },
+      fields: {}
+    };
+    
+    this.messages.update((msgs: any) => [
+      ...msgs,
+      {
+        id: Date.now().toString(),
+        role: 'user', 
+        type: 'entry-card',
+        content: `Create new ${contentType.name}`,
+        timestamp: new Date(),
+        cardData: blankEntry,
+        cardContentType: contentType
+      }
+    ]);
+    setTimeout(() => this.scrollToBottom(), 100);
+  }
+
+  async loadEntryForEdit(entry: any) {
+    this.showEntriesPanel.set(false);
+    
+    // Find content type schema
+    const ctId = entry.sys.contentType.sys.id;
+    const ct = this.contentfulService.contentTypes().find((c: any) => c.sys.id === ctId);
+    
+    this.messages.update((msgs: any) => [
+      ...msgs,
+      {
+        id: Date.now().toString(),
+        role: 'user',
+        type: 'entry-card',
+        content: `Edit ${entry.fields.title?.['en-US'] || entry.sys.id}`,
+        timestamp: new Date(),
+        cardData: JSON.parse(JSON.stringify(entry)), // Deep copy so we can edit
+        cardContentType: ct
+      }
+    ]);
+    setTimeout(() => this.scrollToBottom(), 100);
+  }
+
+  updateCardField(msgId: string, fieldId: string, value: any, locale: string = 'en-US') {
+    this.messages.update((msgs: any) => msgs.map((m: any) => {
+      if (m.id === msgId && m.cardData) {
+        const newData = { ...m.cardData };
+        if (!newData.fields) newData.fields = {};
+        if (!newData.fields[fieldId]) newData.fields[fieldId] = {};
+        newData.fields[fieldId][locale] = value;
+        return { ...m, cardData: newData };
+      }
+      return m;
+    }));
+  }
+
+  async saveEntryCard(msgId: string) {
+    const msg = this.messages().find((m: any) => m.id === msgId);
+    if (!msg || !msg.cardData) return;
+    
+    this.isLoading.set(true);
+    try {
+      const isCreate = !msg.cardData.sys.id;
+      const intent = isCreate ? 'create' : 'update';
+      
+      const action: any = {
+        intent,
+        contentTypeId: msg.cardContentType?.sys?.id,
+        fields: msg.cardData.fields
+      };
+      
+      if (!isCreate) action.entryId = msg.cardData.sys.id;
+      
+      const resultEntry = await this.contentfulService.executeAction(action);
+      
+      this.messages.update((msgs: any) => msgs.map((m: any) => m.id === msgId ? {
+        ...m,
+        cardData: resultEntry,
+        content: isCreate ? `Created ${msg.cardContentType?.name}` : `Updated ${msg.cardContentType?.name}`
+      } as any : m));
+      
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_success',
+          role: 'assistant',
+          content: '✅ Saved successfully to Contentful.',
+          timestamp: new Date()
+        }
+      ]);
+      
+    } catch (err: any) {
+      console.error(err);
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_error',
+          role: 'assistant',
+          content: `❌ Save failed: ${err.message}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      this.isLoading.set(false);
+      setTimeout(() => this.scrollToBottom(), 100);
+    }
+  }
+
+  async publishEntryCard(msgId: string) {
+    const msg = this.messages().find((m: any) => m.id === msgId);
+    if (!msg || !msg.cardData?.sys?.id) return;
+    this.isLoading.set(true);
+    try {
+      const published = await this.contentfulService.publishEntry(msg.cardData.sys.id);
+      
+      this.messages.update((msgs: any) => msgs.map((m: any) => m.id === msgId ? {
+        ...m,
+        cardData: published
+      } : m));
+      
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_publish',
+          role: 'assistant',
+          content: '✅ Entry published live!',
+          timestamp: new Date()
+        }
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_error_publish',
+          role: 'assistant',
+          content: `❌ Publish failed: ${err.message}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      this.isLoading.set(false);
+      setTimeout(() => this.scrollToBottom(), 100);
+    }
   }
 
   getAssetUrl(asset: any): string | null {
