@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 
 export interface UserConfig {
   cmaToken?: string;
+  lastSpaceId?: string;
 }
 
 @Injectable({

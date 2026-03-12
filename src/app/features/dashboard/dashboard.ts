@@ -36,6 +36,7 @@ export class Dashboard {
   public currentSpace = this.contentfulService.activeSpace;
   public spaces = this.contentfulService.spaces;
   public showSpaceMenu = signal<boolean>(false);
+  public showModelsPanel = signal<boolean>(false);
   public messageInput = signal<string>('');
   
   // Voice state

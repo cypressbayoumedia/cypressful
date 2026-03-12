@@ -43,10 +43,15 @@ export class ContentfulService {
     try {
       const spaceCollection = await this.client.getSpaces();
       this.spaces.set(spaceCollection.items);
-      
-      // Select first space by default if none selected
+      const lastSpaceId = this.configService.config()?.lastSpaceId;
+      const spaceExists = spaceCollection.items.some((s: any) => s.sys.id === lastSpaceId);
+
+      // Select last space if it exists, otherwise select the first space by default
       if (spaceCollection.items.length > 0 && !this.activeSpace()) {
-        await this.selectSpace(spaceCollection.items[0].sys.id);
+        const targetId = spaceExists ? lastSpaceId : spaceCollection.items[0].sys.id;
+        if (targetId) {
+          await this.selectSpace(targetId);
+        }
       }
     } catch (error) {
       console.error('Error fetching Contentful spaces:', error);
@@ -58,6 +63,9 @@ export class ContentfulService {
     try {
       const space = await this.client.getSpace(spaceId);
       this.activeSpace.set(space);
+      
+      // Save choice to Firestore configuration
+      this.configService.saveConfig({ lastSpaceId: spaceId }).catch(e => console.error('Failed to save lastSpaceId', e));
       
       // Get the master environment
       const env = await space.getEnvironment('master');
