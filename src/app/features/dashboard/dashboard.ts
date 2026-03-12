@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -52,6 +52,10 @@ export class Dashboard {
   
   public stagedImage = signal<File | null>(null);
   public stagedImageBase64 = signal<string | null>(null);
+  public isLoading = signal<boolean>(false);
+
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  @ViewChild('chatInput') private chatInput!: ElementRef;
 
   constructor() {
     // Sync voice transcript to input
@@ -72,6 +76,18 @@ export class Dashboard {
     } else {
       this.voiceService.startListening();
     }
+  }
+
+  ngAfterViewChecked() {
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom(): void {
+    try {
+      if (this.scrollContainer) {
+        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      }
+    } catch(err) { }
   }
 
   onFileSelected(event: any) {
@@ -118,6 +134,8 @@ export class Dashboard {
         ...(currentBase64 ? { inlineData: { data: currentBase64, mimeType: currentImage?.type } } : {})
       } as any
     ]);
+
+    this.isLoading.set(true);
 
     try {
       // Create a temporary "thinking" message
@@ -208,6 +226,14 @@ export class Dashboard {
           timestamp: new Date()
         }
       ]);
+    } finally {
+      this.isLoading.set(false);
+      // Auto-focus the input box after sending is complete
+      setTimeout(() => {
+        if (this.chatInput) {
+          this.chatInput.nativeElement.focus();
+        }
+      }, 0);
     }
   }
 
