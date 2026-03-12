@@ -1,0 +1,151 @@
+<div class="flex flex-col h-screen bg-slate-900 text-slate-100 max-w-md mx-auto shadow-2xl relative overflow-hidden bg-noise">
+  <!-- Header -->
+  <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 p-4 sticky top-0 z-10 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-glow overflow-hidden">
+        @if (user()?.photoURL) {
+          <img [src]="user()?.photoURL" alt="Profile" class="w-full h-full object-cover">
+        } @else {
+          <span class="font-bold text-white text-lg">J</span>
+        }
+      </div>
+      <div class="relative">
+        <h1 class="text-lg font-bold tracking-tight">Cypressful</h1>
+        <button (click)="showSpaceMenu.set(!showSpaceMenu())" class="text-xs text-emerald-400 font-medium flex items-center gap-1 hover:text-emerald-300 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 -ml-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400" [class.bg-emerald-400]="contentfulService.isReady()" [class.bg-red-500]="!contentfulService.isReady()"></span>
+          {{ currentSpace()?.name || 'Select Workspace' }}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+          </svg>
+        </button>
+
+      <!-- Dropdown Menu -->
+        @if (showSpaceMenu()) {
+          <div class="absolute top-full left-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1 z-50 overflow-hidden">
+            @for (space of spaces(); track space.sys.id) {
+              <button 
+                (click)="contentfulService.selectSpace(space.sys.id); showSpaceMenu.set(false)"
+                class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors flex items-center gap-2">
+                @if (currentSpace()?.sys.id === space.sys.id) {
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                } @else {
+                  <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
+                }
+                {{ space.name }}
+              </button>
+            }
+            @if (spaces().length === 0) {
+              <div class="px-4 py-3 text-xs text-slate-400 italic">No spaces available or CMA token missing.</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-1">
+      <!-- Settings Button -->
+      <a routerLink="/settings" class="p-2 text-slate-400 hover:text-white transition-colors" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+          <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.097.078.15.226.15.399v.227c0 .173-.053.32-.15.399l-.84.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.098-.078-.15-.226-.15-.399v-.227c0-.173.052-.32.15-.399l.84-.692a1.875 1.875 0 00.432-2.385l-.923-1.597a1.875 1.875 0 00-2.28-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75c2.071 0 3.75-1.679 3.75-3.75s-1.679-3.75-3.75-3.75-3.75 1.679-3.75 3.75 1.679 3.75 3.75 3.75z" clip-rule="evenodd" />
+        </svg>
+      </a>
+      <!-- Logout Button -->
+      <button (click)="logout()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Sign Out">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Chat Area -->
+  <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-24 scroll-smooth">
+    @for (msg of messages(); track msg.id) {
+      <div class="flex w-full animate-fade-in-up" [class.justify-end]="msg.role === 'user'">
+        @if (msg.role === 'assistant') {
+          <div class="w-8 h-8 rounded-full bg-emerald-600 flex-shrink-0 flex items-center justify-center mt-1 mr-2 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-white">
+              <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.577 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.577l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.577-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        }
+        
+        <div class="max-w-[80%] rounded-2xl px-4 py-3 shadow-md table"
+             [class.bg-emerald-600]="msg.role === 'user'"
+             [class.text-white]="msg.role === 'user'"
+             [class.rounded-tr-sm]="msg.role === 'user'"
+             [class.bg-slate-800]="msg.role === 'assistant'"
+             [class.text-slate-200]="msg.role === 'assistant'"
+             [class.rounded-tl-sm]="msg.role === 'assistant'"
+             [class.border]="msg.role === 'assistant'"
+             [class.border-slate-700]="msg.role === 'assistant'">
+          @if (msg.inlineData?.data) {
+            <img [src]="'data:' + (msg.inlineData?.mimeType || 'image/png') + ';base64,' + msg.inlineData?.data" 
+                 class="max-w-full rounded-lg mb-2 object-cover max-h-48 border border-white/20" alt="Uploaded Image" />
+          }
+          <p class="whitespace-pre-wrap leading-relaxed block">{{ msg.content }}</p>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- Bottom Input UI (Thumb Zone) -->
+  <footer class="absolute bottom-0 w-full p-4 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent border-none flex flex-col gap-2">
+    <!-- Image Preview -->
+    @if (stagedImageBase64()) {
+      <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 p-2 rounded-xl shadow-lg w-max mx-auto relative group animate-fade-in-up">
+        <img [src]="stagedImageBase64()" class="w-16 h-16 object-cover rounded-lg border border-slate-600" alt="Preview">
+        <button (click)="removeStagedImage()" class="absolute -top-2 -right-2 bg-slate-700 hover:bg-red-500 text-white p-1 rounded-full shadow-md transition-colors border border-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+    }
+
+    <div class="bg-slate-800 border border-slate-700 rounded-full flex items-center p-1 shadow-lg shadow-black/30">
+      
+      <!-- Media Upload Button (Thumb-accessible) -->
+      <button (click)="fileInput.click()" class="p-3 text-slate-400 hover:text-emerald-400 transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
+      <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+
+      <!-- Input Field -->
+      <input 
+        type="text" 
+        [value]="messageInput()"
+        (input)="updateInput($event)"
+        (keyup.enter)="sendMessage(messageInput())"
+        placeholder="Update Bayou Brisket price to $15..." 
+        class="flex-1 bg-transparent border-none text-white focus:ring-0 px-2 placeholder-slate-500 outline-none w-full"
+      >
+      
+      <!-- Send / Voice Button -->
+      @if (messageInput()) {
+        <button 
+          (click)="sendMessage(messageInput())"
+          class="p-3 text-white bg-emerald-500 rounded-full hover:bg-emerald-400 transition-colors shadow-md ml-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 mr-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+          </svg>
+        </button>
+      } @else {
+        <button 
+          (click)="toggleVoice()"
+          [class.bg-red-500]="isListening()"
+          [class.animate-pulse]="isListening()"
+          [class.bg-slate-700]="!isListening()"
+          class="p-3 text-white rounded-full hover:bg-slate-600 transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-slate-500/50 mr-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+            <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+          </svg>
+        </button>
+      }
+    </div>
+  </footer>
+</div>

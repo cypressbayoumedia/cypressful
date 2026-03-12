@@ -1,0 +1,78 @@
+<main class="min-h-screen bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden font-sans">
+  <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
+  
+  <div class="relative z-10 flex flex-col h-full">
+    <!-- Header -->
+    <header class="p-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center gap-3 sticky top-0 z-20 shadow-md">
+      <a routerLink="/dashboard" class="p-2 -ml-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+          <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
+        </svg>
+      </a>
+      <h1 class="text-lg font-bold tracking-tight">Settings</h1>
+    </header>
+
+    <div class="p-4 flex-1 overflow-y-auto space-y-6 pb-20">
+      
+      <!-- Contentful Integration -->
+      <section class="bg-slate-800/50 rounded-2xl border border-slate-700 p-5 shadow-lg">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6zm14.25 6a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0zM8.25 9.75a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM15.75 9.75a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM8.25 17.25a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <h2 class="text-lg font-semibold text-white">Contentful Integration</h2>
+        </div>
+        
+        <p class="text-sm text-slate-300 mb-4 leading-relaxed">
+          Cypressful requires a Personal Access Token (CMA Token) to manage your content.
+        </p>
+        
+        <div class="space-y-3">
+          <label class="block text-sm font-medium text-slate-400">Contentful Management API Token</label>
+          <input 
+            type="password" 
+            [(ngModel)]="cmaTokenInput"
+            placeholder="CFPAT-..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all font-mono text-sm shadow-inner"
+          />
+        </div>
+
+        <button 
+          (click)="saveSettings()"
+          [disabled]="isSaving()"
+          class="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl shadow-glow transition-all flex items-center justify-center gap-2 disabled:bg-slate-600 disabled:shadow-none">
+          @if (isSaving()) {
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+          } @else if (saveSuccess()) {
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+            </svg>
+            Saved!
+          } @else {
+            Save Token
+          }
+        </button>
+
+        <!-- Guide -->
+        <div class="mt-6 pt-5 border-t border-slate-700/50">
+          <h3 class="text-sm font-medium text-slate-300 mb-2">How to get your token:</h3>
+          <ol class="list-decimal list-inside text-xs text-slate-400 space-y-1.5 ml-1">
+            <li>Log in to your <a href="https://app.contentful.com" target="_blank" class="text-blue-400 hover:underline">Contentful Dashboard</a>.</li>
+            <li>Click <strong>Settings</strong> in the top navigation.</li>
+            <li>Select <strong>CMA Tokens</strong> under Space Settings.</li>
+            <li>Click <strong>Create personal access token</strong>.</li>
+            <li>Give it a name (e.g., "Cypressful App") and click <strong>Generate</strong>.</li>
+            <li>Copy the token and paste it above.</li>
+          </ol>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
