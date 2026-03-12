@@ -15,6 +15,8 @@ export class ContentfulService {
   public activeSpace = signal<any | null>(null);
   public activeEnvironment = signal<any | null>(null);
   public contentTypes = signal<any[]>([]);
+  public assets = signal<any[]>([]);
+  public assetsLoading = signal<boolean>(false);
 
   constructor() {
     toObservable(this.configService.config).subscribe((configuration) => {
@@ -72,6 +74,7 @@ export class ContentfulService {
       this.activeEnvironment.set(env);
       
       this.fetchContentModel(env);
+      this.fetchAssets(env);
     } catch (error) {
       console.error(`Error selecting space ${spaceId}:`, error);
     }
@@ -106,12 +109,72 @@ export class ContentfulService {
       console.log('Published entry successfully:', published);
       return published;
     } else if (action.intent === 'update') {
-      throw new Error('Update intent not fully supported yet by AI assistant.');
+      let entry: any;
+
+      if (action.entryId) {
+        console.log('Updating entry by ID:', action.entryId);
+        entry = await env.getEntry(action.entryId);
+      } else if (action.entryTitle && action.contentTypeId) {
+        console.log('Resolving entry by title:', action.entryTitle);
+        entry = await this.findEntryByTitle(env, action.contentTypeId, action.entryTitle);
+      } else {
+        throw new Error('Update requires either an entryId or an entryTitle + contentTypeId.');
+      }
+
+      // Merge the new fields into the existing entry
+      for (const [fieldKey, fieldValue] of Object.entries(action.fields)) {
+        entry.fields[fieldKey] = fieldValue;
+      }
+
+      console.log('Saving updated entry:', entry.sys.id);
+      const updatedEntry = await entry.update();
+      console.log('Entry updated successfully:', updatedEntry.sys.id);
+      return updatedEntry;
+
     } else if (action.intent === 'query') {
-      throw new Error('Query intent not fully supported yet by AI assistant.');
+      console.log('Querying entries for content type:', action.contentTypeId);
+      const entries = await env.getEntries({
+        content_type: action.contentTypeId,
+        limit: 10
+      });
+      console.log(`Found ${entries.items.length} entries.`);
+      return entries.items;
+
     } else {
       throw new Error(`Unknown intent: ${action.intent}`);
     }
+  }
+
+  /**
+   * Find an entry by its title within a given content type.
+   */
+  private async findEntryByTitle(environment: any, contentTypeId: string, title: string): Promise<any> {
+    const entries = await environment.getEntries({
+      content_type: contentTypeId,
+      limit: 100
+    });
+
+    // Search through entries for a title field match (case-insensitive)
+    const match = entries.items.find((entry: any) => {
+      const titleField = entry.fields['title'] || entry.fields['name'] || entry.fields['headline'];
+      if (!titleField) return false;
+      
+      // Check across all locales
+      for (const locale of Object.keys(titleField)) {
+        if (typeof titleField[locale] === 'string' && 
+            titleField[locale].toLowerCase().includes(title.toLowerCase())) {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (!match) {
+      throw new Error(`No entry found with title matching "${title}" in content type "${contentTypeId}".`);
+    }
+
+    console.log('Resolved entry by title:', match.sys.id, '→', title);
+    return match;
   }
 
   async uploadAsset(file: File): Promise<any> {
@@ -149,5 +212,39 @@ export class ContentfulService {
     
     console.log('Asset published successfully:', publishedAsset);
     return publishedAsset;
+  }
+
+  async fetchAssets(environment?: any) {
+    const env = environment || this.activeEnvironment();
+    if (!env) return;
+
+    this.assetsLoading.set(true);
+    try {
+      const assetCollection = await env.getAssets({ limit: 100, order: '-sys.createdAt' });
+      this.assets.set(assetCollection.items);
+      console.log(`Loaded ${assetCollection.items.length} assets.`);
+    } catch (error) {
+      console.error('Error fetching assets:', error);
+    } finally {
+      this.assetsLoading.set(false);
+    }
+  }
+
+  async deleteAsset(assetId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+
+    const asset = await env.getAsset(assetId);
+    
+    // Unpublish first if published
+    if (asset.sys.publishedVersion) {
+      await asset.unpublish();
+    }
+    
+    await asset.delete();
+    console.log('Asset deleted:', assetId);
+
+    // Refresh the assets list
+    this.assets.update(items => items.filter((a: any) => a.sys.id !== assetId));
   }
 }

@@ -37,6 +37,8 @@ export class Dashboard {
   public spaces = this.contentfulService.spaces;
   public showSpaceMenu = signal<boolean>(false);
   public showModelsPanel = signal<boolean>(false);
+  public showMediaPanel = signal<boolean>(false);
+  public selectedAsset = signal<any | null>(null);
   public messageInput = signal<string>('');
   
   // Voice state
@@ -76,6 +78,45 @@ export class Dashboard {
       this.voiceService.stopListening();
     } else {
       this.voiceService.startListening();
+    }
+  }
+
+  openMediaPanel() {
+    this.showMediaPanel.set(true);
+    this.contentfulService.fetchAssets();
+  }
+
+  getAssetUrl(asset: any): string | null {
+    const file = asset?.fields?.file?.['en-US'];
+    if (!file?.url) return null;
+    return file.url.startsWith('//') ? 'https:' + file.url : file.url;
+  }
+
+  getAssetSize(asset: any): string {
+    const bytes = asset?.fields?.file?.['en-US']?.details?.size;
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  isImageAsset(asset: any): boolean {
+    const contentType = asset?.fields?.file?.['en-US']?.contentType || '';
+    return contentType.startsWith('image/');
+  }
+
+  async copyAssetId(id: string) {
+    await navigator.clipboard.writeText(id);
+  }
+
+  async onDeleteAsset(assetId: string) {
+    if (!confirm('Delete this asset permanently?')) return;
+    try {
+      await this.contentfulService.deleteAsset(assetId);
+      this.selectedAsset.set(null);
+    } catch (err: any) {
+      console.error('Failed to delete asset:', err);
+      alert('Failed to delete asset: ' + err.message);
     }
   }
 
