@@ -1,0 +1,136 @@
+<div class="flex flex-col gap-3 min-w-[200px] w-full sm:min-w-[280px] md:min-w-[380px] lg:min-w-[420px]">
+  <div class="flex items-center gap-2 border-b border-emerald-500/30 pb-2 mb-1">
+    <span class="text-[10px] bg-slate-900 border border-emerald-500/50 text-emerald-300 px-1.5 py-0.5 rounded font-mono uppercase">{{ message().cardContentType.name }}</span>
+    <span class="text-xs font-semibold truncate">{{ message().cardData.sys.id ? 'Edit Entry' : 'New Entry' }}</span>
+    @if (message().cardData.sys.id) {
+       <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded"
+          [class.bg-amber-500/20]="getEntryStatus(message().cardData) === 'Draft'"
+          [class.text-amber-400]="getEntryStatus(message().cardData) === 'Draft'"
+          [class.bg-emerald-500/20]="getEntryStatus(message().cardData) === 'Published'"
+          [class.text-emerald-400]="getEntryStatus(message().cardData) === 'Published'"
+          [class.bg-blue-500/20]="getEntryStatus(message().cardData) === 'Changed'"
+          [class.text-blue-400]="getEntryStatus(message().cardData) === 'Changed'"
+          [class.bg-slate-600]="getEntryStatus(message().cardData) === 'Archived'"
+          [class.text-slate-300]="getEntryStatus(message().cardData) === 'Archived'">
+          {{ getEntryStatus(message().cardData) }}
+        </span>
+    }
+  </div>
+
+  @for (field of message().cardContentType.fields; track field.id) {
+    <div class="flex flex-col gap-1">
+      <label class="text-[10px] font-medium text-emerald-100/70 uppercase tracking-wider flex items-center gap-1">{{ field.name }} @if (field.required) { <span class="text-emerald-400">*</span> }</label>
+      
+      <!-- Render based on field type -->
+      @if (field.type === 'Text') {
+        <textarea 
+          [value]="message().cardData.fields[field.id]?.['en-US'] || ''"
+          (input)="onFieldUpdate(field.id, $any($event.target).value)"
+          class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none resize-none min-h-[60px]"
+          placeholder="Enter {{ field.name | lowercase }}..."></textarea>
+      } @else if (field.type === 'Integer' || field.type === 'Number') {
+        <input 
+          type="number"
+          [value]="message().cardData.fields[field.id]?.['en-US'] || ''"
+          (input)="onFieldUpdate(field.id, $any($event.target).value)"
+          class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
+      } @else if (field.type === 'Boolean') {
+        <select
+          [value]="message().cardData.fields[field.id]?.['en-US'] ? 'true' : 'false'"
+          (change)="onFieldUpdate(field.id, $any($event.target).value === 'true' ? true : false)"
+          class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-emerald-400">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      } @else if (field.type === 'Link' && field.linkType === 'Asset') {
+        <!-- Asset Link Field -->
+        @if (message().cardData.fields[field.id]?.['en-US']?.sys?.id) {
+          <!-- Linked asset preview -->
+          <div class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg p-2 flex items-center gap-2">
+            @if (getLinkedAssetUrl(message().cardData.fields[field.id]?.['en-US'])) {
+              <img [src]="getLinkedAssetUrl(message().cardData.fields[field.id]?.['en-US'])! + '?w=80&h=80&fit=thumb'" alt="" class="w-10 h-10 rounded object-cover border border-emerald-500/20">
+            } @else {
+              <div class="w-10 h-10 rounded bg-slate-700 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-slate-400">
+                  <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            }
+            <div class="flex-1 overflow-hidden">
+              <p class="text-[10px] text-white truncate">{{ getLinkedAssetTitle(message().cardData.fields[field.id]?.['en-US']) }}</p>
+              <p class="text-[8px] text-emerald-400/60 font-mono truncate">{{ message().cardData.fields[field.id]?.['en-US']?.sys?.id }}</p>
+            </div>
+            <button (click)="onClearAsset(field.id)" class="p-1 text-red-400 hover:text-red-300 transition-colors" title="Remove asset">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+            <button (click)="onOpenAssetPicker(field.id)" class="p-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Change asset">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                <path d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033a6.997 6.997 0 0011.215-3.257.75.75 0 00-1.251-.749zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.767a.75.75 0 000 1.5h3.634a.75.75 0 00.75-.75V3.538a.75.75 0 00-1.5 0v2.033A6.997 6.997 0 003.437 8.825a.75.75 0 001.25.751z" />
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <!-- No asset linked: show picker button -->
+          <button (click)="onOpenAssetPicker(field.id)" 
+            class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-3 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400/50 transition-all flex items-center justify-center gap-2 group">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform">
+              <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+            </svg>
+            Choose Asset
+          </button>
+        }
+      } @else if (field.type === 'Link' || field.type === 'Array') {
+        <div class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-2 py-1.5 text-[10px] text-emerald-100/50 italic flex items-center justify-between">
+          <span>{{ field.type }} reference</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.75 9.25a.75.75 0 000 1.5h4.59l-2.1 1.95a.75.75 0 001.02 1.1l3.5-3.25a.75.75 0 000-1.1l-3.5-3.25a.75.75 0 10-1.02 1.1l2.1 1.95H6.75z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      } @else {
+        <input 
+          type="text"
+          [value]="message().cardData.fields[field.id]?.['en-US'] || ''"
+          (input)="onFieldUpdate(field.id, $any($event.target).value)"
+          class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
+      }
+    </div>
+  }
+
+  <!-- Card Actions -->
+  @if (!message().cardData._deleted) {
+  <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-emerald-500/30">
+    <div class="flex items-center gap-2">
+      <button (click)="save.emit(message().id)" [disabled]="isLoading()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors shadow-md shadow-emerald-500/20">
+        {{ message().cardData.sys.id ? 'Save Changes' : 'Create Entry' }}
+      </button>
+      @if (message().cardData.sys.id && getEntryStatus(message().cardData) !== 'Published') {
+        <button (click)="publish.emit(message().id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors">
+          Publish
+        </button>
+      }
+    </div>
+    @if (message().cardData.sys.id) {
+      <div class="flex items-center gap-2">
+        @if (getEntryStatus(message().cardData) === 'Published' || getEntryStatus(message().cardData) === 'Changed') {
+          <button (click)="unpublish.emit(message().id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+            </svg>
+            Unpublish
+          </button>
+        }
+        <button (click)="deleteEntry.emit(message().id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-red-500/50 text-red-400 hover:bg-red-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+          </svg>
+          Delete
+        </button>
+      </div>
+    }
+  </div>
+  } @else {
+    <div class="text-center text-xs text-red-400/70 italic py-2 border-t border-red-500/20 mt-2">This entry has been deleted.</div>
+  }
+</div>

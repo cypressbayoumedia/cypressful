@@ -26,6 +26,7 @@ Cypressful is a mobile-first, "headless dashboard" Progressive Web App (PWA) des
 6. **Entry Management & Templates Integration**: Added an Entries Browser overlay, Templates popover, and interactive, inline entry editing cards inside the chat feed to manage Contentful records directly.
 7. **Power-Up: Full Entry Lifecycle Control**: Added Unpublish and Delete capabilities to entry cards and the Entries Browser panel. Users can now unpublish published entries (revert to draft) and permanently delete entries — both via UI buttons and through chat AI commands.
 8. **Power-Up: Inline Asset Picker**: Link (Asset) fields in entry cards now show an interactive "Choose Asset" button that opens a media library overlay. Users can browse, select, preview, and replace linked assets directly within entry templates. Linked assets show thumbnails with clear/swap controls.
+9. **Dashboard Component Decomposition**: Broke the monolithic `dashboard.ts` (~607 lines) and `dashboard.html` (~705 lines) into 7 focused child components: `DashboardHeader`, `ContentModelsPanel`, `MediaLibraryPanel`, `EntriesPanel`, `EntryCard`, `AssetPicker`, and `ChatInput`. The dashboard remains a thin orchestrator (~287 lines TS, ~95 lines HTML). A shared `ChatMessage` model was extracted to `models/chat-message.model.ts`.
 
 ## Next Steps
 - Implement support for viewing and editing complex field types (Dates, Rich Text, Entry References) within the entry cards.

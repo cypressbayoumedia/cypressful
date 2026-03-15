@@ -1,423 +1,55 @@
 <div class="flex flex-col h-screen bg-slate-900 text-slate-100 w-full mx-auto shadow-2xl relative overflow-hidden bg-noise">
   <!-- Header -->
-  <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 px-4 py-3 md:px-8 sticky top-0 z-10 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-glow overflow-hidden">
-        @if (user()?.photoURL) {
-          <img [src]="user()?.photoURL" alt="Profile" class="w-full h-full object-cover">
-        } @else {
-          <span class="font-bold text-white text-lg">J</span>
-        }
-      </div>
-      <div class="relative">
-        <h1 class="text-lg font-bold tracking-tight">Cypressful</h1>
-        <button (click)="showSpaceMenu.set(!showSpaceMenu())" class="text-xs text-emerald-400 font-medium flex items-center gap-1 hover:text-emerald-300 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 -ml-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400" [class.bg-emerald-400]="contentfulService.isReady()" [class.bg-red-500]="!contentfulService.isReady()"></span>
-          {{ currentSpace()?.name || 'Select Workspace' }}
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
-            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-          </svg>
-        </button>
-
-      <!-- Dropdown Menu -->
-        @if (showSpaceMenu()) {
-          <div class="absolute top-full left-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1 z-50 overflow-hidden">
-            @for (space of spaces(); track space.sys.id) {
-              <button 
-                (click)="contentfulService.selectSpace(space.sys.id); showSpaceMenu.set(false)"
-                class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors flex items-center gap-2">
-                @if (currentSpace()?.sys.id === space.sys.id) {
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                } @else {
-                  <span class="w-1.5 h-1.5 rounded-full bg-transparent"></span>
-                }
-                {{ space.name }}
-              </button>
-            }
-            @if (spaces().length === 0) {
-              <div class="px-4 py-3 text-xs text-slate-400 italic">No spaces available or CMA token missing.</div>
-            }
-          </div>
-        }
-      </div>
-    </div>
-    
-    <div class="flex items-center gap-1">
-      <!-- Entries Browser Button -->
-      <button (click)="openEntriesPanel()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Entries Browser">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-          <path fill-rule="evenodd" d="M2.625 6.75a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0A.75.75 0 018.25 6h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 17.25a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
-        </svg>
-      </button>
-      <!-- Media Library Button -->
-      <button (click)="openMediaPanel()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Media Library">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-          <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-        </svg>
-      </button>
-      <!-- Content Models Button -->
-      <button (click)="showModelsPanel.set(!showModelsPanel())" class="p-2 text-slate-400 hover:text-white transition-colors" title="Content Models">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-          <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
-          <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-          <path d="M3.265 15.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-        </svg>
-      </button>
-      <!-- Settings Button -->
-      <a routerLink="/settings" class="p-2 text-slate-400 hover:text-white transition-colors" title="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-          <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.097.078.15.226.15.399v.227c0 .173-.053.32-.15.399l-.84.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.098-.078-.15-.226-.15-.399v-.227c0-.173.052-.32.15-.399l.84-.692a1.875 1.875 0 00.432-2.385l-.923-1.597a1.875 1.875 0 00-2.28-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75c2.071 0 3.75-1.679 3.75-3.75s-1.679-3.75-3.75-3.75-3.75 1.679-3.75 3.75 1.679 3.75 3.75 3.75z" clip-rule="evenodd" />
-        </svg>
-      </a>
-      <!-- Logout Button -->
-      <button (click)="logout()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Sign Out">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-        </svg>
-      </button>
-    </div>
-  </header>
+  <app-dashboard-header
+    [user]="user()"
+    [currentSpace]="currentSpace()"
+    [spaces]="spaces()"
+    [isReady]="contentfulService.isReady()"
+    [showSpaceMenu]="showSpaceMenu()"
+    (toggleSpaceMenu)="showSpaceMenu.set(!showSpaceMenu())"
+    (selectSpace)="onSelectSpace($event)"
+    (openEntries)="openEntriesPanel()"
+    (openMedia)="openMediaPanel()"
+    (toggleModels)="showModelsPanel.set(!showModelsPanel())"
+    (logoutClicked)="logout()"
+  />
 
   <!-- Content Models Overlay Panel -->
-  @if (showModelsPanel()) {
-    <div class="absolute inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
-      <!-- Panel Header -->
-      <div class="flex items-center justify-between p-4 border-b border-slate-700">
-        <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
-            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
-            <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-            <path d="M3.265 15.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-          </svg>
-          <h2 class="text-lg font-bold text-white">Content Models</h2>
-          <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ contentfulService.contentTypes().length }}</span>
-        </div>
-        <button (click)="showModelsPanel.set(false)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Model List -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 md:max-w-4xl md:mx-auto md:w-full">
-        @for (model of contentfulService.contentTypes(); track model.sys.id) {
-          <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-semibold text-white text-sm">{{ model.name }}</h3>
-              <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{{ model.fields?.length || 0 }} fields</span>
-            </div>
-            @if (model.description) {
-              <p class="text-xs text-slate-400 mb-3">{{ model.description }}</p>
-            }
-            <div class="flex flex-wrap gap-1.5">
-              @for (field of model.fields; track field.id) {
-                <span class="text-[10px] bg-slate-900 text-slate-400 px-2 py-1 rounded-md border border-slate-700 font-mono">
-                  {{ field.name }}
-                  <span class="text-emerald-500/70 ml-0.5">{{ field.type }}</span>
-                </span>
-              }
-            </div>
-          </div>
-        }
-        @if (contentfulService.contentTypes().length === 0) {
-          <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-12 h-12 text-slate-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-            </svg>
-            <p class="text-sm italic">No content models found.</p>
-            <p class="text-xs">Select a space or check your CMA token.</p>
-          </div>
-        }
-      </div>
-    </div>
-  }
+  <app-content-models-panel
+    [show]="showModelsPanel()"
+    [contentTypes]="contentfulService.contentTypes()"
+    (closed)="showModelsPanel.set(false)"
+  />
 
   <!-- Media Library Overlay Panel -->
-  @if (showMediaPanel()) {
-    <div class="absolute inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
-      <!-- Panel Header -->
-      <div class="flex items-center justify-between p-4 border-b border-slate-700">
-        <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
-            <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-          </svg>
-          <h2 class="text-lg font-bold text-white">Media Library</h2>
-          <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ contentfulService.assets().length }}</span>
-        </div>
-        <button (click)="showMediaPanel.set(false); selectedAsset.set(null)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Asset Grid -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-6">
-        @if (contentfulService.assetsLoading()) {
-          <!-- Loading Skeleton -->
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            @for (i of [1,2,3,4,5,6]; track i) {
-              <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden animate-pulse">
-                <div class="w-full h-28 bg-slate-700"></div>
-                <div class="p-3">
-                  <div class="h-3 bg-slate-700 rounded w-3/4 mb-2"></div>
-                  <div class="h-2 bg-slate-700 rounded w-1/2"></div>
-                </div>
-              </div>
-            }
-          </div>
-        } @else if (contentfulService.assets().length === 0) {
-          <!-- Empty State -->
-          <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8 min-h-[300px]">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-12 h-12 text-slate-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-            </svg>
-            <p class="text-sm italic">No media assets found.</p>
-            <p class="text-xs">Upload images via the chat to populate your library.</p>
-          </div>
-        } @else {
-          <!-- Asset Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            @for (asset of contentfulService.assets(); track asset.sys.id) {
-              <button (click)="selectedAsset.set(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-500/50 transition-all hover:shadow-emerald-500/10 text-left group">
-                <!-- Thumbnail -->
-                <div class="w-full h-28 bg-slate-700 flex items-center justify-center overflow-hidden">
-                  @if (isImageAsset(asset) && getAssetUrl(asset)) {
-                    <img [src]="getAssetUrl(asset)! + '?w=200&h=200&fit=thumb'" [alt]="asset.fields?.title?.['en-US'] || 'Asset'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                  } @else {
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-slate-500">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  }
-                </div>
-                <!-- Info -->
-                <div class="p-2.5">
-                  <p class="text-xs font-medium text-white truncate">{{ asset.fields?.title?.['en-US'] || 'Untitled' }}</p>
-                  <div class="flex items-center justify-between mt-1">
-                    <span class="text-[10px] text-slate-400">{{ asset.fields?.file?.['en-US']?.contentType || 'unknown' }}</span>
-                    <span class="text-[10px] text-slate-500">{{ getAssetSize(asset) }}</span>
-                  </div>
-                </div>
-              </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  }
+  <app-media-library-panel
+    [show]="showMediaPanel()"
+    [assets]="contentfulService.assets()"
+    [assetsLoading]="contentfulService.assetsLoading()"
+    (closed)="showMediaPanel.set(false)"
+    (deleteAsset)="onDeleteAsset($event)"
+  />
 
   <!-- Entries Panel Overlay -->
-  @if (showEntriesPanel()) {
-    <div class="absolute inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
-      <!-- Panel Header -->
-      <div class="flex items-center justify-between p-4 border-b border-slate-700">
-        <div class="flex flex-col gap-1 w-full max-w-[80%]">
-          <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
-              <path fill-rule="evenodd" d="M2.625 6.75a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0A.75.75 0 018.25 6h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 17.25a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
-            </svg>
-            <h2 class="text-lg font-bold text-white">Entries Browser</h2>
-            <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ filteredEntries.length }}</span>
-          </div>
-          <!-- Filter Dropdown -->
-          <select 
-            [value]="entryFilter()"
-            (change)="entryFilter.set($any($event.target).value)"
-            class="mt-2 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1 outline-none focus:border-emerald-500">
-            <option value="">All Content Types</option>
-            @for (ct of contentfulService.contentTypes(); track ct.sys.id) {
-              <option [value]="ct.sys.id">{{ ct.name }}</option>
-            }
-          </select>
-        </div>
-        <button (click)="showEntriesPanel.set(false)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800 self-start">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Entries List -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 md:max-w-4xl md:mx-auto md:w-full">
-        @if (contentfulService.entriesLoading()) {
-          <!-- Skeleton -->
-          @for (i of [1,2,3,4]; track i) {
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 animate-pulse">
-              <div class="h-4 bg-slate-700 rounded w-1/2 mb-3"></div>
-              <div class="flex gap-2">
-                <div class="h-3 bg-slate-700 rounded w-16"></div>
-                <div class="h-3 bg-slate-700 rounded w-16"></div>
-              </div>
-            </div>
-          }
-        } @else if (filteredEntries.length === 0) {
-          <!-- Empty -->
-          <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            <p class="text-sm italic">No entries found.</p>
-          </div>
-        } @else {
-          <!-- List -->
-          @for (entry of filteredEntries; track entry.sys.id) {
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors group">
-              <button (click)="loadEntryForEdit(entry)" class="text-left w-full">
-                <h3 class="font-semibold text-white text-sm truncate mb-2 group-hover:text-emerald-400 transition-colors">
-                  {{ entry.fields?.title?.['en-US'] || entry.fields?.name?.['en-US'] || entry.fields?.internalName?.['en-US'] || 'Untitled Entry' }}
-                </h3>
-                <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
-                  <div class="flex items-center gap-2">
-                    <span class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md font-mono">{{ entry.sys.contentType.sys.id }}</span>
-                    <span class="px-2 py-0.5 rounded-md"
-                      [class.bg-amber-500/20]="getEntryStatus(entry) === 'Draft'"
-                      [class.text-amber-400]="getEntryStatus(entry) === 'Draft'"
-                      [class.bg-emerald-500/20]="getEntryStatus(entry) === 'Published'"
-                      [class.text-emerald-400]="getEntryStatus(entry) === 'Published'"
-                      [class.bg-blue-500/20]="getEntryStatus(entry) === 'Changed'"
-                      [class.text-blue-400]="getEntryStatus(entry) === 'Changed'"
-                      [class.bg-slate-600]="getEntryStatus(entry) === 'Archived'"
-                      [class.text-slate-300]="getEntryStatus(entry) === 'Archived'">
-                      {{ getEntryStatus(entry) }}
-                    </span>
-                  </div>
-                  <span>{{ entry.sys.updatedAt?.slice(0, 10) }}</span>
-                </div>
-              </button>
-              <!-- Quick Actions -->
-              <div class="flex items-center gap-1.5 pt-2 border-t border-slate-700/50">
-                <button (click)="loadEntryForEdit(entry)" class="flex-1 text-[10px] text-slate-300 bg-slate-700/50 hover:bg-slate-700 py-1.5 rounded-lg transition-colors font-medium">Edit</button>
-                @if (getEntryStatus(entry) === 'Published' || getEntryStatus(entry) === 'Changed') {
-                  <button (click)="unpublishEntryFromPanel($event, entry)" class="flex-1 text-[10px] text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 py-1.5 rounded-lg transition-colors font-medium">Unpublish</button>
-                }
-                <button (click)="deleteEntryFromPanel($event, entry)" class="flex-1 text-[10px] text-red-400 bg-red-500/10 hover:bg-red-500/20 py-1.5 rounded-lg transition-colors font-medium">Delete</button>
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Asset Lightbox -->
-  @if (selectedAsset()) {
-    <div class="absolute inset-0 z-50 bg-black/90 backdrop-blur-lg flex flex-col animate-fade-in-up">
-      <!-- Lightbox Header -->
-      <div class="flex items-center justify-between p-4">
-        <h3 class="text-sm font-semibold text-white truncate flex-1 mr-4">{{ selectedAsset()?.fields?.title?.['en-US'] || 'Asset' }}</h3>
-        <button (click)="selectedAsset.set(null)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Preview -->
-      <div class="flex-1 flex items-center justify-center p-4 overflow-hidden">
-        @if (isImageAsset(selectedAsset()!) && getAssetUrl(selectedAsset()!)) {
-          <img [src]="getAssetUrl(selectedAsset()!)! + '?w=600'" [alt]="selectedAsset()?.fields?.title?.['en-US']" class="max-w-full max-h-full object-contain rounded-xl shadow-2xl">
-        } @else {
-          <div class="flex flex-col items-center gap-3 text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-20 h-20">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            <p class="text-sm">Preview unavailable for this file type</p>
-          </div>
-        }
-      </div>
-
-      <!-- Details Bar -->
-      <div class="p-4 bg-slate-900/80 border-t border-slate-800 flex flex-col gap-3">
-        <!-- File Details -->
-        <div class="flex items-center gap-3 text-xs text-slate-400">
-          <span class="bg-slate-800 px-2 py-1 rounded-md border border-slate-700">{{ selectedAsset()?.fields?.file?.['en-US']?.contentType }}</span>
-          <span>{{ getAssetSize(selectedAsset()!) }}</span>
-          <span class="font-mono text-emerald-400/70 text-[10px] truncate flex-1">{{ selectedAsset()?.sys?.id }}</span>
-        </div>
-        <!-- Action Buttons -->
-        <div class="flex items-center gap-2">
-          <button (click)="copyAssetId(selectedAsset()!.sys.id)" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors border border-slate-700 flex items-center justify-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-              <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
-              <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
-            </svg>
-            Copy ID
-          </button>
-          <button (click)="onDeleteAsset(selectedAsset()!.sys.id)" class="flex-1 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-xl transition-colors border border-red-500/30 flex items-center justify-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-              <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
-            </svg>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  }
+  <app-entries-panel
+    [show]="showEntriesPanel()"
+    [entries]="contentfulService.entries()"
+    [contentTypes]="contentfulService.contentTypes()"
+    [entriesLoading]="contentfulService.entriesLoading()"
+    (closed)="showEntriesPanel.set(false)"
+    (editEntry)="loadEntryForEdit($event)"
+    (unpublishEntry)="unpublishEntryFromPanel($event)"
+    (deleteEntry)="deleteEntryFromPanel($event)"
+  />
 
   <!-- Asset Picker Overlay (for Link fields) -->
-  @if (showAssetPicker()) {
-    <div class="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
-      <!-- Picker Header -->
-      <div class="flex items-center justify-between p-4 border-b border-slate-700">
-        <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
-            <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-          </svg>
-          <h2 class="text-lg font-bold text-white">Choose Asset</h2>
-          <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ contentfulService.assets().length }}</span>
-        </div>
-        <button (click)="showAssetPicker.set(false); assetPickerTarget.set(null)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Asset Grid -->
-      <div class="flex-1 overflow-y-auto p-4 md:p-6">
-        @if (contentfulService.assetsLoading()) {
-          <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            @for (i of [1,2,3,4,5,6]; track i) {
-              <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden animate-pulse">
-                <div class="w-full h-20 bg-slate-700"></div>
-                <div class="p-2">
-                  <div class="h-2 bg-slate-700 rounded w-3/4"></div>
-                </div>
-              </div>
-            }
-          </div>
-        } @else if (contentfulService.assets().length === 0) {
-          <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8 min-h-[200px]">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-10 h-10">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-            </svg>
-            <p class="text-sm italic">No assets available.</p>
-            <p class="text-xs">Upload images via the chat first.</p>
-          </div>
-        } @else {
-          <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-            @for (asset of contentfulService.assets(); track asset.sys.id) {
-              <button (click)="selectAssetForField(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-400 hover:shadow-emerald-500/20 transition-all text-left group">
-                <div class="w-full h-20 bg-slate-700 flex items-center justify-center overflow-hidden">
-                  @if (isImageAsset(asset) && getAssetUrl(asset)) {
-                    <img [src]="getAssetUrl(asset)! + '?w=150&h=120&fit=thumb'" [alt]="asset.fields?.title?.['en-US'] || 'Asset'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
-                  } @else {
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-500">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                  }
-                </div>
-                <div class="p-2">
-                  <p class="text-[10px] font-medium text-white truncate">{{ asset.fields?.title?.['en-US'] || 'Untitled' }}</p>
-                </div>
-              </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  }
+  <app-asset-picker
+    [show]="showAssetPicker()"
+    [assets]="contentfulService.assets()"
+    [assetsLoading]="contentfulService.assetsLoading()"
+    (closed)="showAssetPicker.set(false); assetPickerTarget.set(null)"
+    (assetSelected)="selectAssetForField($event)"
+  />
 
   <!-- Chat Area -->
   <main #scrollContainer class="flex-1 overflow-y-auto p-4 md:px-8 lg:px-12 flex flex-col gap-4 pb-24 scroll-smooth">
@@ -441,143 +73,18 @@
              [class.border]="msg.role === 'assistant'"
              [class.border-slate-700]="msg.role === 'assistant'">
           @if (msg.type === 'entry-card' && msg.cardData && msg.cardContentType) {
-            <!-- Editing Card -->
-            <div class="flex flex-col gap-3 min-w-[200px] w-full sm:min-w-[280px] md:min-w-[380px] lg:min-w-[420px]">
-              <div class="flex items-center gap-2 border-b border-emerald-500/30 pb-2 mb-1">
-                <span class="text-[10px] bg-slate-900 border border-emerald-500/50 text-emerald-300 px-1.5 py-0.5 rounded font-mono uppercase">{{ msg.cardContentType.name }}</span>
-                <span class="text-xs font-semibold truncate">{{ msg.cardData.sys.id ? 'Edit Entry' : 'New Entry' }}</span>
-                @if (msg.cardData.sys.id) {
-                   <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded"
-                      [class.bg-amber-500/20]="getEntryStatus(msg.cardData) === 'Draft'"
-                      [class.text-amber-400]="getEntryStatus(msg.cardData) === 'Draft'"
-                      [class.bg-emerald-500/20]="getEntryStatus(msg.cardData) === 'Published'"
-                      [class.text-emerald-400]="getEntryStatus(msg.cardData) === 'Published'"
-                      [class.bg-blue-500/20]="getEntryStatus(msg.cardData) === 'Changed'"
-                      [class.text-blue-400]="getEntryStatus(msg.cardData) === 'Changed'"
-                      [class.bg-slate-600]="getEntryStatus(msg.cardData) === 'Archived'"
-                      [class.text-slate-300]="getEntryStatus(msg.cardData) === 'Archived'">
-                      {{ getEntryStatus(msg.cardData) }}
-                    </span>
-                }
-              </div>
-
-              @for (field of msg.cardContentType.fields; track field.id) {
-                <div class="flex flex-col gap-1">
-                  <label class="text-[10px] font-medium text-emerald-100/70 uppercase tracking-wider flex items-center gap-1">{{ field.name }} @if (field.required) { <span class="text-emerald-400">*</span> }</label>
-                  
-                  <!-- Render based on field type -->
-                  @if (field.type === 'Text') {
-                    <textarea 
-                      [value]="msg.cardData.fields[field.id]?.['en-US'] || ''"
-                      (input)="updateCardField(msg.id, field.id, $any($event.target).value)"
-                      class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none resize-none min-h-[60px]"
-                      placeholder="Enter {{ field.name | lowercase }}..."></textarea>
-                  } @else if (field.type === 'Integer' || field.type === 'Number') {
-                    <input 
-                      type="number"
-                      [value]="msg.cardData.fields[field.id]?.['en-US'] || ''"
-                      (input)="updateCardField(msg.id, field.id, $any($event.target).value)"
-                      class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
-                  } @else if (field.type === 'Boolean') {
-                    <select
-                      [value]="msg.cardData.fields[field.id]?.['en-US'] ? 'true' : 'false'"
-                      (change)="updateCardField(msg.id, field.id, $any($event.target).value === 'true' ? true : false)"
-                      class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-emerald-400">
-                      <option value="false">No</option>
-                      <option value="true">Yes</option>
-                    </select>
-                  } @else if (field.type === 'Link' && field.linkType === 'Asset') {
-                    <!-- Asset Link Field -->
-                    @if (msg.cardData.fields[field.id]?.['en-US']?.sys?.id) {
-                      <!-- Linked asset preview -->
-                      <div class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg p-2 flex items-center gap-2">
-                        @if (getLinkedAssetUrl(msg.cardData.fields[field.id]?.['en-US'])) {
-                          <img [src]="getLinkedAssetUrl(msg.cardData.fields[field.id]?.['en-US'])! + '?w=80&h=80&fit=thumb'" alt="" class="w-10 h-10 rounded object-cover border border-emerald-500/20">
-                        } @else {
-                          <div class="w-10 h-10 rounded bg-slate-700 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-slate-400">
-                              <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-                            </svg>
-                          </div>
-                        }
-                        <div class="flex-1 overflow-hidden">
-                          <p class="text-[10px] text-white truncate">{{ getLinkedAssetTitle(msg.cardData.fields[field.id]?.['en-US']) }}</p>
-                          <p class="text-[8px] text-emerald-400/60 font-mono truncate">{{ msg.cardData.fields[field.id]?.['en-US']?.sys?.id }}</p>
-                        </div>
-                        <button (click)="clearAssetField(msg.id, field.id)" class="p-1 text-red-400 hover:text-red-300 transition-colors" title="Remove asset">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                          </svg>
-                        </button>
-                        <button (click)="openAssetPickerForField(msg.id, field.id)" class="p-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Change asset">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-                            <path d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033a6.997 6.997 0 0011.215-3.257.75.75 0 00-1.251-.749zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.767a.75.75 0 000 1.5h3.634a.75.75 0 00.75-.75V3.538a.75.75 0 00-1.5 0v2.033A6.997 6.997 0 003.437 8.825a.75.75 0 001.25.751z" />
-                          </svg>
-                        </button>
-                      </div>
-                    } @else {
-                      <!-- No asset linked: show picker button -->
-                      <button (click)="openAssetPickerForField(msg.id, field.id)" 
-                        class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-3 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400/50 transition-all flex items-center justify-center gap-2 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform">
-                          <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
-                        </svg>
-                        Choose Asset
-                      </button>
-                    }
-                  } @else if (field.type === 'Link' || field.type === 'Array') {
-                    <div class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-2 py-1.5 text-[10px] text-emerald-100/50 italic flex items-center justify-between">
-                      <span>{{ field.type }} reference</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.75 9.25a.75.75 0 000 1.5h4.59l-2.1 1.95a.75.75 0 001.02 1.1l3.5-3.25a.75.75 0 000-1.1l-3.5-3.25a.75.75 0 10-1.02 1.1l2.1 1.95H6.75z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  } @else {
-                    <input 
-                      type="text"
-                      [value]="msg.cardData.fields[field.id]?.['en-US'] || ''"
-                      (input)="updateCardField(msg.id, field.id, $any($event.target).value)"
-                      class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
-                  }
-                </div>
-              }
-
-              <!-- Card Actions -->
-              @if (!msg.cardData._deleted) {
-              <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-emerald-500/30">
-                <div class="flex items-center gap-2">
-                  <button (click)="saveEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors shadow-md shadow-emerald-500/20">
-                    {{ msg.cardData.sys.id ? 'Save Changes' : 'Create Entry' }}
-                  </button>
-                  @if (msg.cardData.sys.id && getEntryStatus(msg.cardData) !== 'Published') {
-                    <button (click)="publishEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors">
-                      Publish
-                    </button>
-                  }
-                </div>
-                @if (msg.cardData.sys.id) {
-                  <div class="flex items-center gap-2">
-                    @if (getEntryStatus(msg.cardData) === 'Published' || getEntryStatus(msg.cardData) === 'Changed') {
-                      <button (click)="unpublishEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-                          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                        </svg>
-                        Unpublish
-                      </button>
-                    }
-                    <button (click)="deleteEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-red-500/50 text-red-400 hover:bg-red-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
-                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                }
-              </div>
-              } @else {
-                <div class="text-center text-xs text-red-400/70 italic py-2 border-t border-red-500/20 mt-2">This entry has been deleted.</div>
-              }
-            </div>
+            <app-entry-card
+              [message]="msg"
+              [isLoading]="isLoading()"
+              [assets]="contentfulService.assets()"
+              (save)="saveEntryCard($event)"
+              (publish)="publishEntryCard($event)"
+              (unpublish)="unpublishEntryCard($event)"
+              (deleteEntry)="deleteEntryCard($event)"
+              (updateField)="updateCardField($event)"
+              (openAssetPicker)="openAssetPickerForField($event)"
+              (clearAsset)="clearAssetField($event)"
+            />
           } @else {
             @if (msg.inlineData?.data) {
               <img [src]="'data:' + (msg.inlineData?.mimeType || 'image/png') + ';base64,' + msg.inlineData?.data" 
@@ -590,115 +97,16 @@
     }
   </main>
 
-  <!-- Bottom Input UI (Thumb Zone) -->
-  <footer class="absolute bottom-0 w-full p-4 md:px-8 lg:px-12 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent border-none flex flex-col gap-2">
-    <!-- Image Preview -->
-    @if (stagedImageBase64()) {
-      <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 p-2 rounded-xl shadow-lg w-max mx-auto relative group animate-fade-in-up">
-        <img [src]="stagedImageBase64()" class="w-16 h-16 object-cover rounded-lg border border-slate-600" alt="Preview">
-        <button (click)="removeStagedImage()" class="absolute -top-2 -right-2 bg-slate-700 hover:bg-red-500 text-white p-1 rounded-full shadow-md transition-colors border border-slate-600">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-    }
-
-  <!-- Templates Popover -->
-  @if (showTemplatesPopover()) {
-    <div class="templates-popover absolute bottom-16 left-4 md:left-8 lg:left-12 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 w-64 md:w-80 z-50 animate-slide-up flex flex-col max-h-[50vh]">
-      <div class="flex items-center justify-between mb-3 border-b border-slate-700 pb-2">
-        <h3 class="text-white text-sm font-bold flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400">
-            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
-            <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-          </svg>
-          Templates
-        </h3>
-        <button (click)="showTemplatesPopover.set(false)" class="text-slate-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
-        </button>
-      </div>
-      <div class="overflow-y-auto flex flex-col gap-2">
-        @for (ct of contentfulService.contentTypes(); track ct.sys.id) {
-          <button (click)="selectTemplate(ct)" class="text-left flex items-center gap-2 p-2 hover:bg-slate-700/50 rounded-lg transition-colors group">
-            <span class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs group-hover:bg-emerald-500 group-hover:text-white transition-colors border border-emerald-500/20 shadow-sm">{{ ct.name.charAt(0) }}</span>
-            <div class="flex-1 overflow-hidden">
-              <p class="text-sm font-semibold text-white truncate">{{ ct.name }}</p>
-              <p class="text-[10px] text-slate-400 truncate">{{ ct.fields?.length || 0 }} fields</p>
-            </div>
-          </button>
-        }
-        @if (contentfulService.contentTypes().length === 0) {
-          <p class="text-xs text-slate-500 italic p-2">Wait for models to load...</p>
-        }
-      </div>
-    </div>
-  }
-
-    <div class="bg-slate-800 border border-slate-700 rounded-full flex items-center p-1 shadow-lg shadow-black/30 max-w-3xl mx-auto w-full">
-      
-      <!-- Templates Button -->
-      <button (click)="toggleTemplates()" [disabled]="isLoading()" class="templates-btn p-3 text-emerald-400 hover:text-emerald-300 transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50 relative">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-          <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.577 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.577l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.577-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5z" clip-rule="evenodd" />
-        </svg>
-      </button>
-
-      <!-- Media Upload Button (Thumb-accessible) -->
-      <button (click)="fileInput.click()" [disabled]="isLoading()" class="p-3 text-slate-400 hover:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      </button>
-      <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="isLoading()">
-
-      <!-- Input Field -->
-      <input 
-        #chatInput
-        type="text" 
-        [value]="messageInput()"
-        (input)="updateInput($event)"
-        (keyup.enter)="sendMessage(messageInput())"
-        [disabled]="isLoading()"
-        placeholder="Update Bayou Brisket price to $15..." 
-        class="flex-1 bg-transparent border-none text-white focus:ring-0 px-2 placeholder-slate-500 outline-none w-full disabled:opacity-50"
-      >
-      
-      <!-- Send / Voice Button -->
-      @if (messageInput() || stagedImage()) {
-        <button 
-          (click)="sendMessage(messageInput())"
-          [disabled]="isLoading()"
-          class="p-3 text-white bg-emerald-500 rounded-full hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md ml-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 mr-1 flex items-center justify-center min-w-[44px] min-h-[44px]">
-          @if (isLoading()) {
-            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-            </svg>
-          }
-        </button>
-      } @else {
-        <button 
-          (click)="toggleVoice()"
-          [disabled]="isLoading()"
-          [class.bg-red-500]="isListening()"
-          [class.animate-pulse]="isListening()"
-          [class.bg-slate-700]="!isListening()"
-          class="p-3 text-white rounded-full hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-slate-500/50 mr-1"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-            <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
-            <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
-          </svg>
-        </button>
-      }
-    </div>
-  </footer>
+  <!-- Bottom Input UI -->
+  <app-chat-input
+    [isLoading]="isLoading()"
+    [isListening]="isListening()"
+    [contentTypes]="contentfulService.contentTypes()"
+    [messageInput]="messageInput()"
+    (sendMessage)="sendMessage($event)"
+    (selectTemplate)="onSelectTemplate($event)"
+    (toggleVoice)="toggleVoice()"
+    (fileSelected)="onFileSelected($event)"
+    (inputChanged)="messageInput.set($event)"
+  />
 </div>

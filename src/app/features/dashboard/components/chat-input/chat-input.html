@@ -1,0 +1,110 @@
+<footer class="absolute bottom-0 w-full p-4 md:px-8 lg:px-12 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent border-none flex flex-col gap-2">
+  <!-- Image Preview -->
+  @if (stagedImageBase64()) {
+    <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 p-2 rounded-xl shadow-lg w-max mx-auto relative group animate-fade-in-up">
+      <img [src]="stagedImageBase64()" class="w-16 h-16 object-cover rounded-lg border border-slate-600" alt="Preview">
+      <button (click)="removeStagedImage()" class="absolute -top-2 -right-2 bg-slate-700 hover:bg-red-500 text-white p-1 rounded-full shadow-md transition-colors border border-slate-600">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Templates Popover -->
+  @if (showTemplatesPopover()) {
+    <div class="templates-popover absolute bottom-16 left-4 md:left-8 lg:left-12 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 w-64 md:w-80 z-50 animate-slide-up flex flex-col max-h-[50vh]">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-700 pb-2">
+        <h3 class="text-white text-sm font-bold flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400">
+            <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
+            <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
+          </svg>
+          Templates
+        </h3>
+        <button (click)="showTemplatesPopover.set(false)" class="text-slate-400 hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+      <div class="overflow-y-auto flex flex-col gap-2">
+        @for (ct of contentTypes(); track ct.sys.id) {
+          <button (click)="onSelectTemplate(ct)" class="text-left flex items-center gap-2 p-2 hover:bg-slate-700/50 rounded-lg transition-colors group">
+            <span class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs group-hover:bg-emerald-500 group-hover:text-white transition-colors border border-emerald-500/20 shadow-sm">{{ ct.name.charAt(0) }}</span>
+            <div class="flex-1 overflow-hidden">
+              <p class="text-sm font-semibold text-white truncate">{{ ct.name }}</p>
+              <p class="text-[10px] text-slate-400 truncate">{{ ct.fields?.length || 0 }} fields</p>
+            </div>
+          </button>
+        }
+        @if (contentTypes().length === 0) {
+          <p class="text-xs text-slate-500 italic p-2">Wait for models to load...</p>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="bg-slate-800 border border-slate-700 rounded-full flex items-center p-1 shadow-lg shadow-black/30 max-w-3xl mx-auto w-full">
+    
+    <!-- Templates Button -->
+    <button (click)="toggleTemplates()" [disabled]="isLoading()" class="templates-btn p-3 text-emerald-400 hover:text-emerald-300 transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50 relative">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+        <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.577 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.577l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.577-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+    <!-- Media Upload Button -->
+    <button (click)="fileInput.click()" [disabled]="isLoading()" class="p-3 text-slate-400 hover:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </button>
+    <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="isLoading()">
+
+    <!-- Input Field -->
+    <input 
+      #chatInput
+      type="text" 
+      [value]="messageInput()"
+      (input)="updateInput($event)"
+      (keyup.enter)="onSend()"
+      [disabled]="isLoading()"
+      placeholder="Update Bayou Brisket price to $15..." 
+      class="flex-1 bg-transparent border-none text-white focus:ring-0 px-2 placeholder-slate-500 outline-none w-full disabled:opacity-50"
+    >
+    
+    <!-- Send / Voice Button -->
+    @if (messageInput() || stagedImage()) {
+      <button 
+        (click)="onSend()"
+        [disabled]="isLoading()"
+        class="p-3 text-white bg-emerald-500 rounded-full hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md ml-1 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 mr-1 flex items-center justify-center min-w-[44px] min-h-[44px]">
+        @if (isLoading()) {
+          <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+          </svg>
+        }
+      </button>
+    } @else {
+      <button 
+        (click)="toggleVoice.emit()"
+        [disabled]="isLoading()"
+        [class.bg-red-500]="isListening()"
+        [class.animate-pulse]="isListening()"
+        [class.bg-slate-700]="!isListening()"
+        class="p-3 text-white rounded-full hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-1 focus:outline-none focus:ring-2 focus:ring-slate-500/50 mr-1"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+          <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+          <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+        </svg>
+      </button>
+    }
+  </div>
+</footer>
