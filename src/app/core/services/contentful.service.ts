@@ -110,6 +110,28 @@ export class ContentfulService {
       const published = await entry.publish();
       console.log('Published entry successfully:', published);
       return published;
+    } else if (action.intent === 'unpublish') {
+      if (!action.entryId) throw new Error('No entryId provided to unpublish.');
+      console.log('Unpublishing entry:', action.entryId);
+      const entry = await env.getEntry(action.entryId);
+      const unpublished = await entry.unpublish();
+      console.log('Unpublished entry successfully:', unpublished);
+      return unpublished;
+    } else if (action.intent === 'delete') {
+      let entryId = action.entryId;
+      if (!entryId && action.entryTitle && action.contentTypeId) {
+        const found = await this.findEntryByTitle(env, action.contentTypeId, action.entryTitle);
+        entryId = found.sys.id;
+      }
+      if (!entryId) throw new Error('No entryId or entryTitle provided to delete.');
+      console.log('Deleting entry:', entryId);
+      const entry = await env.getEntry(entryId);
+      if (entry.sys.publishedVersion) {
+        await entry.unpublish();
+      }
+      await entry.delete();
+      console.log('Entry deleted:', entryId);
+      return { deleted: true, entryId };
     } else if (action.intent === 'update') {
       let entry: any;
 
@@ -250,6 +272,31 @@ export class ContentfulService {
     if (!env) throw new Error('No active Contentful environment.');
     const entry = await env.getEntry(entryId);
     return entry.publish();
+  }
+
+  async unpublishEntry(entryId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+    const entry = await env.getEntry(entryId);
+    return entry.unpublish();
+  }
+
+  async deleteEntry(entryId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+    const entry = await env.getEntry(entryId);
+    // Unpublish first if published
+    if (entry.sys.publishedVersion) {
+      await entry.unpublish();
+    }
+    await entry.delete();
+    console.log('Entry deleted:', entryId);
+  }
+
+  async getAsset(assetId: string) {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+    return env.getAsset(assetId);
   }
 
   async fetchAssets(environment?: any) {

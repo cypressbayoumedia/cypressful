@@ -45,6 +45,8 @@ export class Dashboard {
   public showEntriesPanel = signal<boolean>(false);
   public showTemplatesPopover = signal<boolean>(false);
   public entryFilter = signal<string>('');
+  public showAssetPicker = signal<boolean>(false);
+  public assetPickerTarget = signal<{msgId: string; fieldId: string} | null>(null);
   public selectedAsset = signal<any | null>(null);
   public messageInput = signal<string>('');
   
@@ -262,6 +264,145 @@ export class Dashboard {
     } finally {
       this.isLoading.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
+    }
+  }
+
+  async unpublishEntryCard(msgId: string) {
+    const msg = this.messages().find((m: any) => m.id === msgId);
+    if (!msg || !msg.cardData?.sys?.id) return;
+    this.isLoading.set(true);
+    try {
+      const unpublished = await this.contentfulService.unpublishEntry(msg.cardData.sys.id);
+      
+      this.messages.update((msgs: any) => msgs.map((m: any) => m.id === msgId ? {
+        ...m,
+        cardData: unpublished
+      } : m));
+      
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_unpublish',
+          role: 'assistant',
+          content: '⬇️ Entry unpublished — reverted to draft.',
+          timestamp: new Date()
+        }
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_error_unpublish',
+          role: 'assistant',
+          content: `❌ Unpublish failed: ${err.message}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      this.isLoading.set(false);
+      setTimeout(() => this.scrollToBottom(), 100);
+    }
+  }
+
+  async deleteEntryCard(msgId: string) {
+    const msg = this.messages().find((m: any) => m.id === msgId);
+    if (!msg || !msg.cardData?.sys?.id) return;
+    if (!confirm('Are you sure you want to permanently delete this entry?')) return;
+    this.isLoading.set(true);
+    try {
+      await this.contentfulService.deleteEntry(msg.cardData.sys.id);
+      
+      // Mark the card as deleted
+      this.messages.update((msgs: any) => msgs.map((m: any) => m.id === msgId ? {
+        ...m,
+        cardData: { ...m.cardData, _deleted: true },
+        content: `Deleted ${msg.cardContentType?.name || 'entry'}`
+      } : m));
+      
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_delete',
+          role: 'assistant',
+          content: '🗑️ Entry permanently deleted from Contentful.',
+          timestamp: new Date()
+        }
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      this.messages.update((msgs: any) => [
+        ...msgs,
+        {
+          id: Date.now().toString() + '_error_delete',
+          role: 'assistant',
+          content: `❌ Delete failed: ${err.message}`,
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
+      this.isLoading.set(false);
+      setTimeout(() => this.scrollToBottom(), 100);
+    }
+  }
+
+  // Asset Picker for Link fields
+  openAssetPickerForField(msgId: string, fieldId: string) {
+    this.assetPickerTarget.set({ msgId, fieldId });
+    this.showAssetPicker.set(true);
+    this.contentfulService.fetchAssets();
+  }
+
+  selectAssetForField(asset: any) {
+    const target = this.assetPickerTarget();
+    if (!target) return;
+    
+    // Set the field value to the Contentful Link structure
+    this.updateCardField(target.msgId, target.fieldId, {
+      sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id }
+    });
+    
+    this.showAssetPicker.set(false);
+    this.assetPickerTarget.set(null);
+  }
+
+  clearAssetField(msgId: string, fieldId: string) {
+    this.updateCardField(msgId, fieldId, null);
+  }
+
+  getLinkedAssetUrl(linkValue: any): string | null {
+    if (!linkValue?.sys?.id) return null;
+    const asset = this.contentfulService.assets().find((a: any) => a.sys.id === linkValue.sys.id);
+    if (!asset) return null;
+    return this.getAssetUrl(asset);
+  }
+
+  getLinkedAssetTitle(linkValue: any): string {
+    if (!linkValue?.sys?.id) return '';
+    const asset = this.contentfulService.assets().find((a: any) => a.sys.id === linkValue.sys.id);
+    return asset?.fields?.title?.['en-US'] || linkValue.sys.id;
+  }
+
+  // Entries panel quick actions
+  async unpublishEntryFromPanel(event: Event, entry: any) {
+    event.stopPropagation();
+    if (!entry.sys.publishedVersion) return;
+    try {
+      await this.contentfulService.unpublishEntry(entry.sys.id);
+      this.contentfulService.fetchEntries();
+    } catch (err: any) {
+      alert('Unpublish failed: ' + err.message);
+    }
+  }
+
+  async deleteEntryFromPanel(event: Event, entry: any) {
+    event.stopPropagation();
+    if (!confirm('Permanently delete this entry?')) return;
+    try {
+      await this.contentfulService.deleteEntry(entry.sys.id);
+      this.contentfulService.fetchEntries();
+    } catch (err: any) {
+      alert('Delete failed: ' + err.message);
     }
   }
 

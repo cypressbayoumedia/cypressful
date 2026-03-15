@@ -1,6 +1,6 @@
-<div class="flex flex-col h-screen bg-slate-900 text-slate-100 max-w-md mx-auto shadow-2xl relative overflow-hidden bg-noise">
+<div class="flex flex-col h-screen bg-slate-900 text-slate-100 w-full mx-auto shadow-2xl relative overflow-hidden bg-noise">
   <!-- Header -->
-  <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 p-4 sticky top-0 z-10 flex items-center justify-between">
+  <header class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 px-4 py-3 md:px-8 sticky top-0 z-10 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-glow overflow-hidden">
         @if (user()?.photoURL) {
@@ -100,7 +100,7 @@
       </div>
 
       <!-- Model List -->
-      <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 md:max-w-4xl md:mx-auto md:w-full">
         @for (model of contentfulService.contentTypes(); track model.sys.id) {
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors">
             <div class="flex items-center justify-between mb-2">
@@ -153,10 +153,10 @@
       </div>
 
       <!-- Asset Grid -->
-      <div class="flex-1 overflow-y-auto p-4">
+      <div class="flex-1 overflow-y-auto p-4 md:p-6">
         @if (contentfulService.assetsLoading()) {
           <!-- Loading Skeleton -->
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             @for (i of [1,2,3,4,5,6]; track i) {
               <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden animate-pulse">
                 <div class="w-full h-28 bg-slate-700"></div>
@@ -178,7 +178,7 @@
           </div>
         } @else {
           <!-- Asset Grid -->
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             @for (asset of contentfulService.assets(); track asset.sys.id) {
               <button (click)="selectedAsset.set(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-500/50 transition-all hover:shadow-emerald-500/10 text-left group">
                 <!-- Thumbnail -->
@@ -239,7 +239,7 @@
       </div>
 
       <!-- Entries List -->
-      <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 md:max-w-4xl md:mx-auto md:w-full">
         @if (contentfulService.entriesLoading()) {
           <!-- Skeleton -->
           @for (i of [1,2,3,4]; track i) {
@@ -262,28 +262,38 @@
         } @else {
           <!-- List -->
           @for (entry of filteredEntries; track entry.sys.id) {
-            <button (click)="loadEntryForEdit(entry)" class="text-left bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors group">
-              <h3 class="font-semibold text-white text-sm truncate mb-2 group-hover:text-emerald-400 transition-colors">
-                {{ entry.fields?.title?.['en-US'] || entry.fields?.name?.['en-US'] || entry.fields?.internalName?.['en-US'] || 'Untitled Entry' }}
-              </h3>
-              <div class="flex items-center justify-between text-[10px] text-slate-400">
-                <div class="flex items-center gap-2">
-                  <span class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md font-mono">{{ entry.sys.contentType.sys.id }}</span>
-                  <span class="px-2 py-0.5 rounded-md"
-                    [class.bg-amber-500/20]="getEntryStatus(entry) === 'Draft'"
-                    [class.text-amber-400]="getEntryStatus(entry) === 'Draft'"
-                    [class.bg-emerald-500/20]="getEntryStatus(entry) === 'Published'"
-                    [class.text-emerald-400]="getEntryStatus(entry) === 'Published'"
-                    [class.bg-blue-500/20]="getEntryStatus(entry) === 'Changed'"
-                    [class.text-blue-400]="getEntryStatus(entry) === 'Changed'"
-                    [class.bg-slate-600]="getEntryStatus(entry) === 'Archived'"
-                    [class.text-slate-300]="getEntryStatus(entry) === 'Archived'">
-                    {{ getEntryStatus(entry) }}
-                  </span>
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors group">
+              <button (click)="loadEntryForEdit(entry)" class="text-left w-full">
+                <h3 class="font-semibold text-white text-sm truncate mb-2 group-hover:text-emerald-400 transition-colors">
+                  {{ entry.fields?.title?.['en-US'] || entry.fields?.name?.['en-US'] || entry.fields?.internalName?.['en-US'] || 'Untitled Entry' }}
+                </h3>
+                <div class="flex items-center justify-between text-[10px] text-slate-400 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded-md font-mono">{{ entry.sys.contentType.sys.id }}</span>
+                    <span class="px-2 py-0.5 rounded-md"
+                      [class.bg-amber-500/20]="getEntryStatus(entry) === 'Draft'"
+                      [class.text-amber-400]="getEntryStatus(entry) === 'Draft'"
+                      [class.bg-emerald-500/20]="getEntryStatus(entry) === 'Published'"
+                      [class.text-emerald-400]="getEntryStatus(entry) === 'Published'"
+                      [class.bg-blue-500/20]="getEntryStatus(entry) === 'Changed'"
+                      [class.text-blue-400]="getEntryStatus(entry) === 'Changed'"
+                      [class.bg-slate-600]="getEntryStatus(entry) === 'Archived'"
+                      [class.text-slate-300]="getEntryStatus(entry) === 'Archived'">
+                      {{ getEntryStatus(entry) }}
+                    </span>
+                  </div>
+                  <span>{{ entry.sys.updatedAt?.slice(0, 10) }}</span>
                 </div>
-                <span>{{ entry.sys.updatedAt?.slice(0, 10) }}</span>
+              </button>
+              <!-- Quick Actions -->
+              <div class="flex items-center gap-1.5 pt-2 border-t border-slate-700/50">
+                <button (click)="loadEntryForEdit(entry)" class="flex-1 text-[10px] text-slate-300 bg-slate-700/50 hover:bg-slate-700 py-1.5 rounded-lg transition-colors font-medium">Edit</button>
+                @if (getEntryStatus(entry) === 'Published' || getEntryStatus(entry) === 'Changed') {
+                  <button (click)="unpublishEntryFromPanel($event, entry)" class="flex-1 text-[10px] text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 py-1.5 rounded-lg transition-colors font-medium">Unpublish</button>
+                }
+                <button (click)="deleteEntryFromPanel($event, entry)" class="flex-1 text-[10px] text-red-400 bg-red-500/10 hover:bg-red-500/20 py-1.5 rounded-lg transition-colors font-medium">Delete</button>
               </div>
-            </button>
+            </div>
           }
         }
       </div>
@@ -345,10 +355,74 @@
     </div>
   }
 
+  <!-- Asset Picker Overlay (for Link fields) -->
+  @if (showAssetPicker()) {
+    <div class="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
+      <!-- Picker Header -->
+      <div class="flex items-center justify-between p-4 border-b border-slate-700">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
+            <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+          </svg>
+          <h2 class="text-lg font-bold text-white">Choose Asset</h2>
+          <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ contentfulService.assets().length }}</span>
+        </div>
+        <button (click)="showAssetPicker.set(false); assetPickerTarget.set(null)" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Asset Grid -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        @if (contentfulService.assetsLoading()) {
+          <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden animate-pulse">
+                <div class="w-full h-20 bg-slate-700"></div>
+                <div class="p-2">
+                  <div class="h-2 bg-slate-700 rounded w-3/4"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (contentfulService.assets().length === 0) {
+          <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8 min-h-[200px]">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-10 h-10">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+            </svg>
+            <p class="text-sm italic">No assets available.</p>
+            <p class="text-xs">Upload images via the chat first.</p>
+          </div>
+        } @else {
+          <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+            @for (asset of contentfulService.assets(); track asset.sys.id) {
+              <button (click)="selectAssetForField(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-400 hover:shadow-emerald-500/20 transition-all text-left group">
+                <div class="w-full h-20 bg-slate-700 flex items-center justify-center overflow-hidden">
+                  @if (isImageAsset(asset) && getAssetUrl(asset)) {
+                    <img [src]="getAssetUrl(asset)! + '?w=150&h=120&fit=thumb'" [alt]="asset.fields?.title?.['en-US'] || 'Asset'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-500">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  }
+                </div>
+                <div class="p-2">
+                  <p class="text-[10px] font-medium text-white truncate">{{ asset.fields?.title?.['en-US'] || 'Untitled' }}</p>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Chat Area -->
-  <main #scrollContainer class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-24 scroll-smooth">
+  <main #scrollContainer class="flex-1 overflow-y-auto p-4 md:px-8 lg:px-12 flex flex-col gap-4 pb-24 scroll-smooth">
     @for (msg of messages(); track msg.id) {
-      <div class="flex w-full animate-fade-in-up" [class.justify-end]="msg.role === 'user'">
+      <div class="flex w-full max-w-3xl mx-auto animate-fade-in-up" [class.justify-end]="msg.role === 'user'">
         @if (msg.role === 'assistant') {
           <div class="w-8 h-8 rounded-full bg-emerald-600 flex-shrink-0 flex items-center justify-center mt-1 mr-2 shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-white">
@@ -357,7 +431,7 @@
           </div>
         }
         
-        <div class="max-w-[80%] rounded-2xl px-4 py-3 shadow-md table"
+        <div class="max-w-[80%] md:max-w-[70%] lg:max-w-[60%] rounded-2xl px-4 py-3 shadow-md table"
              [class.bg-emerald-600]="msg.role === 'user'"
              [class.text-white]="msg.role === 'user'"
              [class.rounded-tr-sm]="msg.role === 'user'"
@@ -368,7 +442,7 @@
              [class.border-slate-700]="msg.role === 'assistant'">
           @if (msg.type === 'entry-card' && msg.cardData && msg.cardContentType) {
             <!-- Editing Card -->
-            <div class="flex flex-col gap-3 min-w-[200px] w-full sm:min-w-[280px]">
+            <div class="flex flex-col gap-3 min-w-[200px] w-full sm:min-w-[280px] md:min-w-[380px] lg:min-w-[420px]">
               <div class="flex items-center gap-2 border-b border-emerald-500/30 pb-2 mb-1">
                 <span class="text-[10px] bg-slate-900 border border-emerald-500/50 text-emerald-300 px-1.5 py-0.5 rounded font-mono uppercase">{{ msg.cardContentType.name }}</span>
                 <span class="text-xs font-semibold truncate">{{ msg.cardData.sys.id ? 'Edit Entry' : 'New Entry' }}</span>
@@ -412,6 +486,45 @@
                       <option value="false">No</option>
                       <option value="true">Yes</option>
                     </select>
+                  } @else if (field.type === 'Link' && field.linkType === 'Asset') {
+                    <!-- Asset Link Field -->
+                    @if (msg.cardData.fields[field.id]?.['en-US']?.sys?.id) {
+                      <!-- Linked asset preview -->
+                      <div class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg p-2 flex items-center gap-2">
+                        @if (getLinkedAssetUrl(msg.cardData.fields[field.id]?.['en-US'])) {
+                          <img [src]="getLinkedAssetUrl(msg.cardData.fields[field.id]?.['en-US'])! + '?w=80&h=80&fit=thumb'" alt="" class="w-10 h-10 rounded object-cover border border-emerald-500/20">
+                        } @else {
+                          <div class="w-10 h-10 rounded bg-slate-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-slate-400">
+                              <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        }
+                        <div class="flex-1 overflow-hidden">
+                          <p class="text-[10px] text-white truncate">{{ getLinkedAssetTitle(msg.cardData.fields[field.id]?.['en-US']) }}</p>
+                          <p class="text-[8px] text-emerald-400/60 font-mono truncate">{{ msg.cardData.fields[field.id]?.['en-US']?.sys?.id }}</p>
+                        </div>
+                        <button (click)="clearAssetField(msg.id, field.id)" class="p-1 text-red-400 hover:text-red-300 transition-colors" title="Remove asset">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                          </svg>
+                        </button>
+                        <button (click)="openAssetPickerForField(msg.id, field.id)" class="p-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Change asset">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                            <path d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033a6.997 6.997 0 0011.215-3.257.75.75 0 00-1.251-.749zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.767a.75.75 0 000 1.5h3.634a.75.75 0 00.75-.75V3.538a.75.75 0 00-1.5 0v2.033A6.997 6.997 0 003.437 8.825a.75.75 0 001.25.751z" />
+                          </svg>
+                        </button>
+                      </div>
+                    } @else {
+                      <!-- No asset linked: show picker button -->
+                      <button (click)="openAssetPickerForField(msg.id, field.id)" 
+                        class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-3 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400/50 transition-all flex items-center justify-center gap-2 group">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform">
+                          <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+                        </svg>
+                        Choose Asset
+                      </button>
+                    }
                   } @else if (field.type === 'Link' || field.type === 'Array') {
                     <div class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-2 py-1.5 text-[10px] text-emerald-100/50 italic flex items-center justify-between">
                       <span>{{ field.type }} reference</span>
@@ -430,16 +543,40 @@
               }
 
               <!-- Card Actions -->
-              <div class="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-500/30">
-                <button (click)="saveEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors shadow-md shadow-emerald-500/20">
-                  {{ msg.cardData.sys.id ? 'Save Changes' : 'Create Entry' }}
-                </button>
-                @if (msg.cardData.sys.id && getEntryStatus(msg.cardData) !== 'Published') {
-                  <button (click)="publishEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors">
-                    Publish
+              @if (!msg.cardData._deleted) {
+              <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-emerald-500/30">
+                <div class="flex items-center gap-2">
+                  <button (click)="saveEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors shadow-md shadow-emerald-500/20">
+                    {{ msg.cardData.sys.id ? 'Save Changes' : 'Create Entry' }}
                   </button>
+                  @if (msg.cardData.sys.id && getEntryStatus(msg.cardData) !== 'Published') {
+                    <button (click)="publishEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-emerald-500 text-emerald-400 hover:bg-emerald-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors">
+                      Publish
+                    </button>
+                  }
+                </div>
+                @if (msg.cardData.sys.id) {
+                  <div class="flex items-center gap-2">
+                    @if (getEntryStatus(msg.cardData) === 'Published' || getEntryStatus(msg.cardData) === 'Changed') {
+                      <button (click)="unpublishEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-amber-500/50 text-amber-400 hover:bg-amber-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                        </svg>
+                        Unpublish
+                      </button>
+                    }
+                    <button (click)="deleteEntryCard(msg.id)" [disabled]="isLoading()" class="flex-1 bg-transparent border border-red-500/50 text-red-400 hover:bg-red-500/10 text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
                 }
               </div>
+              } @else {
+                <div class="text-center text-xs text-red-400/70 italic py-2 border-t border-red-500/20 mt-2">This entry has been deleted.</div>
+              }
             </div>
           } @else {
             @if (msg.inlineData?.data) {
@@ -454,7 +591,7 @@
   </main>
 
   <!-- Bottom Input UI (Thumb Zone) -->
-  <footer class="absolute bottom-0 w-full p-4 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent border-none flex flex-col gap-2">
+  <footer class="absolute bottom-0 w-full p-4 md:px-8 lg:px-12 bg-gradient-to-t from-slate-900 via-slate-900/95 to-transparent border-none flex flex-col gap-2">
     <!-- Image Preview -->
     @if (stagedImageBase64()) {
       <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 p-2 rounded-xl shadow-lg w-max mx-auto relative group animate-fade-in-up">
@@ -469,7 +606,7 @@
 
   <!-- Templates Popover -->
   @if (showTemplatesPopover()) {
-    <div class="templates-popover absolute bottom-16 left-4 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 w-64 z-50 animate-slide-up flex flex-col max-h-[50vh]">
+    <div class="templates-popover absolute bottom-16 left-4 md:left-8 lg:left-12 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-4 w-64 md:w-80 z-50 animate-slide-up flex flex-col max-h-[50vh]">
       <div class="flex items-center justify-between mb-3 border-b border-slate-700 pb-2">
         <h3 class="text-white text-sm font-bold flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400">
@@ -501,7 +638,7 @@
     </div>
   }
 
-    <div class="bg-slate-800 border border-slate-700 rounded-full flex items-center p-1 shadow-lg shadow-black/30">
+    <div class="bg-slate-800 border border-slate-700 rounded-full flex items-center p-1 shadow-lg shadow-black/30 max-w-3xl mx-auto w-full">
       
       <!-- Templates Button -->
       <button (click)="toggleTemplates()" [disabled]="isLoading()" class="templates-btn p-3 text-emerald-400 hover:text-emerald-300 transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/50 relative">
