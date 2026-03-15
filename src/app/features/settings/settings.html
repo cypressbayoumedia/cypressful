@@ -40,16 +40,16 @@
         </div>
 
         <button 
-          (click)="saveSettings()"
-          [disabled]="isSaving()"
+          (click)="saveToken()"
+          [disabled]="isSavingToken()"
           class="mt-5 w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl shadow-glow transition-all flex items-center justify-center gap-2 disabled:bg-slate-600 disabled:shadow-none">
-          @if (isSaving()) {
+          @if (isSavingToken()) {
             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Saving...
-          } @else if (saveSuccess()) {
+          } @else if (saveTokenSuccess()) {
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
               <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
             </svg>
@@ -72,6 +72,66 @@
           </ol>
         </div>
       </section>
+
+      <!-- Workspace Settings Section -->
+      @if (contentfulService.spaces().length > 0) {
+        <section class="bg-slate-800/50 rounded-2xl border border-slate-700 p-5 shadow-lg">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM6.262 14.87a8.625 8.625 0 01-3.262-2.87 8.625 8.625 0 011.666-4.99c.925.32 2.053.868 3.328 1.636A11.758 11.758 0 018.667 15l-2.405-.13zM12 20.25a8.625 8.625 0 01-4.706-1.39l2.744-1.428a11.192 11.192 0 003.922 0l2.744 1.428A8.625 8.625 0 0112 20.25zM17.738 14.87l-2.405.13c.48.97.94 2.112 1.258 3.522a8.625 8.625 0 001.666-4.99 8.625 8.625 0 00-3.262 2.868c-.287.164-.582.316-.885.454zM20.25 12A8.625 8.625 0 0018.5 6.476v5.275a8.625 8.625 0 01-1.378 4.545c1.474-.895 2.748-2.025 3.128-2.887a8.625 8.625 0 010-1.409zm-2.922-6.52A8.625 8.625 0 0012 3.75a8.625 8.625 0 00-5.328 1.73A11.026 11.026 0 019 6.75h6c.866-.356 1.764-.783 2.328-1.27z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-white">Workspace Websites</h2>
+          </div>
+          <p class="text-sm text-slate-300 mb-4 leading-relaxed">
+            Configure the live website URL for each of your workspaces. This link will appear in the dashboard header for quick access.
+          </p>
+          <div class="space-y-4">
+            @for (space of contentfulService.spaces(); track space.sys.id) {
+              <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-slate-400">{{ space.name }}</label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="url" 
+                    [ngModel]="spaceUrlsInput()[space.sys.id] || ''" 
+                    (ngModelChange)="updateSpaceUrl(space.sys.id, $event)"
+                    placeholder="https://your-website.com"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm"
+                  />
+                  @if (spaceUrlsInput()[space.sys.id]) {
+                    <a [href]="spaceUrlsInput()[space.sys.id]" target="_blank" class="p-2 text-slate-400 hover:text-emerald-400 transition-colors shrink-0" title="Test Link">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <button 
+            (click)="saveUrls()"
+            [disabled]="isSavingUrls()"
+            class="mt-6 w-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium py-3 rounded-xl shadow-glow transition-all flex items-center justify-center gap-2 disabled:bg-slate-600 disabled:shadow-none">
+            @if (isSavingUrls()) {
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            } @else if (saveUrlsSuccess()) {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+              </svg>
+              Saved!
+            } @else {
+              Save Website URLs
+            }
+          </button>
+        </section>
+      }
 
     </div>
   </div>

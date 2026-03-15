@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 export interface UserConfig {
   cmaToken?: string;
   lastSpaceId?: string;
+  spaceUrls?: Record<string, string>;
 }
 
 @Injectable({
@@ -18,7 +19,7 @@ export class ConfigService {
   private unsub: Unsubscribe | null = null;
 
   constructor() {
-    this.authService.user$.subscribe(user => {
+    this.authService.user$.subscribe((user: any) => {
       if (user) {
         this.listenToConfig(user.uid);
       } else {

@@ -67,7 +67,7 @@ export class Dashboard {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   constructor() {
-    toObservable(this.voiceService.transcript).subscribe((transcript) => {
+    toObservable(this.voiceService.transcript).subscribe((transcript: string) => {
       if (transcript) {
         this.messageInput.set(transcript);
       }

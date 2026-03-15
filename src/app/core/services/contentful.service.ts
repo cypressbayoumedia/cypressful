@@ -21,7 +21,7 @@ export class ContentfulService {
   public entriesLoading = signal<boolean>(false);
 
   constructor() {
-    toObservable(this.configService.config).subscribe((configuration) => {
+    toObservable(this.configService.config).subscribe((configuration: UserConfig | null) => {
       if (configuration?.cmaToken && !this.isReady()) {
         this.initClient(configuration.cmaToken);
       } else if (!configuration?.cmaToken) {

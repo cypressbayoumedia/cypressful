@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ConfigService } from '../../../../core/services/config';
 
 @Component({
   selector: 'app-dashboard-header',
@@ -20,4 +21,6 @@ export class DashboardHeader {
   public openMedia = output<void>();
   public toggleModels = output<void>();
   public logoutClicked = output<void>();
+
+  public configService = inject(ConfigService);
 }

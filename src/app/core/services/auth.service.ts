@@ -16,7 +16,7 @@ export class AuthService {
   constructor() {
     this.user$ = user(this.auth);
 
-    this.user$.subscribe((u) => {
+    this.user$.subscribe((u: any) => {
       this.currentUser.set(u);
       if (u) {
         if (this.router.url === '/login' || this.router.url === '/') {
