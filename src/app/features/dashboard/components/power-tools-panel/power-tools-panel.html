@@ -1,0 +1,368 @@
+@if (show()) {
+  <div class="absolute inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex flex-col animate-fade-in-up">
+    <!-- Panel Header -->
+    <div class="flex items-center justify-between p-4 border-b border-slate-700">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-amber-400">
+          <path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 01.359.852L12.982 9.75h7.268a.75.75 0 01.548 1.262l-10.5 11.25a.75.75 0 01-1.272-.71l1.992-7.302H3.75a.75.75 0 01-.548-1.262l10.5-11.25a.75.75 0 01.913-.143z" clip-rule="evenodd" />
+        </svg>
+        <h2 class="text-lg font-bold text-white">Power Tools</h2>
+      </div>
+      <button (click)="onClose()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="flex border-b border-slate-700">
+      <button
+        (click)="activeTab.set('converter')"
+        class="flex-1 py-3 text-sm font-semibold text-center transition-colors relative"
+        [class.text-amber-400]="activeTab() === 'converter'"
+        [class.text-slate-400]="activeTab() !== 'converter'">
+        <div class="flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+            <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.269a.75.75 0 00-.75.75v3.962a.75.75 0 001.5 0v-2.134l.313.312a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.14-.763A7 7 0 005.066 4.81l-.312-.311v2.134a.75.75 0 01-1.5 0V2.672a.75.75 0 01.75-.75h3.962a.75.75 0 010 1.5H5.533l.312.311a5.5 5.5 0 019.201-2.467.75.75 0 001.496.355z" clip-rule="evenodd" />
+          </svg>
+          Image Converter
+        </div>
+        @if (activeTab() === 'converter') {
+          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-t-full"></div>
+        }
+      </button>
+      <button
+        (click)="activeTab.set('bulk')"
+        class="flex-1 py-3 text-sm font-semibold text-center transition-colors relative"
+        [class.text-amber-400]="activeTab() === 'bulk'"
+        [class.text-slate-400]="activeTab() !== 'bulk'">
+        <div class="flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+            <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
+            <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+          </svg>
+          Bulk Upload
+        </div>
+        @if (activeTab() === 'bulk') {
+          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-t-full"></div>
+        }
+      </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-6">
+
+      <!-- ═══════════════════ CONVERTER TAB ═══════════════════ -->
+      @if (activeTab() === 'converter') {
+        <div class="max-w-2xl mx-auto flex flex-col gap-5">
+
+          <!-- Drop Zone / File Select -->
+          @if (!sourceFile()) {
+            <label class="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-slate-600 rounded-2xl cursor-pointer hover:border-amber-500/50 hover:bg-slate-800/50 transition-all group">
+              <div class="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-amber-400">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                </svg>
+              </div>
+              <div class="text-center">
+                <p class="text-white font-semibold text-sm">Select an image to convert</p>
+                <p class="text-slate-400 text-xs mt-1">HEIC · HEIF · WebP · TIFF · BMP · AVIF</p>
+              </div>
+              <input #converterInput type="file" accept="image/*,.heic,.heif" class="hidden" (change)="onConverterFileSelected($event)" />
+            </label>
+          } @else {
+            <!-- Source File Info -->
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-lg">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <span class="text-xs font-bold text-slate-300">{{ getFileExtension(sourceFile()!.name) }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-white truncate">{{ sourceFile()!.name }}</p>
+                  <p class="text-xs text-slate-400">{{ formatBytes(sourceFile()!.size) }}</p>
+                </div>
+                <button (click)="resetConverter()" class="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-full hover:bg-slate-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Preview (if available) -->
+              @if (sourcePreview()) {
+                <div class="mb-4 rounded-xl overflow-hidden border border-slate-600 bg-slate-900">
+                  <img [src]="sourcePreview()" alt="Source preview" class="w-full h-40 object-contain" />
+                </div>
+              } @else {
+                <div class="mb-4 rounded-xl border border-slate-600 bg-slate-900 h-40 flex items-center justify-center">
+                  <div class="text-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-10 h-10 mx-auto mb-1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                    </svg>
+                    <p class="text-xs">Preview after conversion</p>
+                  </div>
+                </div>
+              }
+
+              <!-- Conversion Settings -->
+              <div class="flex flex-col gap-4">
+                <!-- Format Select -->
+                <div>
+                  <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 block">Output Format</label>
+                  <div class="flex gap-2">
+                    <button (click)="targetFormat.set('image/jpeg')"
+                      class="flex-1 py-2.5 text-xs font-bold rounded-xl border transition-all"
+                      [class.bg-amber-500]="targetFormat() === 'image/jpeg'"
+                      [class.text-white]="targetFormat() === 'image/jpeg'"
+                      [class.border-amber-400]="targetFormat() === 'image/jpeg'"
+                      [class.shadow-lg]="targetFormat() === 'image/jpeg'"
+                      [class.shadow-amber-500/20]="targetFormat() === 'image/jpeg'"
+                      [class.bg-slate-800]="targetFormat() !== 'image/jpeg'"
+                      [class.text-slate-300]="targetFormat() !== 'image/jpeg'"
+                      [class.border-slate-600]="targetFormat() !== 'image/jpeg'"
+                      [class.hover:border-slate-500]="targetFormat() !== 'image/jpeg'">
+                      JPEG
+                    </button>
+                    <button (click)="targetFormat.set('image/png')"
+                      class="flex-1 py-2.5 text-xs font-bold rounded-xl border transition-all"
+                      [class.bg-amber-500]="targetFormat() === 'image/png'"
+                      [class.text-white]="targetFormat() === 'image/png'"
+                      [class.border-amber-400]="targetFormat() === 'image/png'"
+                      [class.shadow-lg]="targetFormat() === 'image/png'"
+                      [class.shadow-amber-500/20]="targetFormat() === 'image/png'"
+                      [class.bg-slate-800]="targetFormat() !== 'image/png'"
+                      [class.text-slate-300]="targetFormat() !== 'image/png'"
+                      [class.border-slate-600]="targetFormat() !== 'image/png'"
+                      [class.hover:border-slate-500]="targetFormat() !== 'image/png'">
+                      PNG
+                    </button>
+                    <button (click)="targetFormat.set('image/webp')"
+                      class="flex-1 py-2.5 text-xs font-bold rounded-xl border transition-all"
+                      [class.bg-amber-500]="targetFormat() === 'image/webp'"
+                      [class.text-white]="targetFormat() === 'image/webp'"
+                      [class.border-amber-400]="targetFormat() === 'image/webp'"
+                      [class.shadow-lg]="targetFormat() === 'image/webp'"
+                      [class.shadow-amber-500/20]="targetFormat() === 'image/webp'"
+                      [class.bg-slate-800]="targetFormat() !== 'image/webp'"
+                      [class.text-slate-300]="targetFormat() !== 'image/webp'"
+                      [class.border-slate-600]="targetFormat() !== 'image/webp'"
+                      [class.hover:border-slate-500]="targetFormat() !== 'image/webp'">
+                      WebP
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Quality Slider -->
+                @if (targetFormat() !== 'image/png') {
+                  <div>
+                    <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                      Quality
+                      <span class="text-amber-400 font-mono">{{ quality() }}%</span>
+                    </label>
+                    <input type="range" min="10" max="100" step="5"
+                      [value]="quality()"
+                      (input)="quality.set(+$any($event.target).value)"
+                      class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500" />
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                      <span>Small file</span>
+                      <span>Best quality</span>
+                    </div>
+                  </div>
+                }
+
+                <!-- Convert Button -->
+                <button (click)="convert()" [disabled]="isConverting()"
+                  class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  @if (isConverting()) {
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Converting...
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                      <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.269a.75.75 0 00-.75.75v3.962a.75.75 0 001.5 0v-2.134l.313.312a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.14-.763A7 7 0 005.066 4.81l-.312-.311v2.134a.75.75 0 01-1.5 0V2.672a.75.75 0 01.75-.75h3.962a.75.75 0 010 1.5H5.533l.312.311a5.5 5.5 0 019.201-2.467.75.75 0 001.496.355z" clip-rule="evenodd" />
+                    </svg>
+                    Convert Image
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Conversion Result -->
+            @if (convertedResult()) {
+              <div class="bg-slate-800/60 border border-emerald-500/30 rounded-2xl p-4 shadow-lg shadow-emerald-500/5">
+                <div class="flex items-center gap-2 mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-emerald-400">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-sm font-semibold text-emerald-400">Conversion Complete</span>
+                </div>
+
+                <!-- Before/After Preview -->
+                @if (convertedPreview()) {
+                  <div class="rounded-xl overflow-hidden border border-slate-600 bg-slate-900 mb-3">
+                    <img [src]="convertedPreview()" alt="Converted preview" class="w-full h-40 object-contain" />
+                  </div>
+                }
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
+                  <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700">
+                    <p class="text-slate-400 mb-1">Original</p>
+                    <p class="text-white font-semibold">{{ formatBytes(convertedResult()!.originalSize) }}</p>
+                    <p class="text-slate-500 truncate">{{ convertedResult()!.originalName }}</p>
+                  </div>
+                  <div class="bg-slate-900/60 rounded-xl p-3 border border-emerald-500/20">
+                    <p class="text-emerald-400 mb-1">Converted</p>
+                    <p class="text-white font-semibold">{{ formatBytes(convertedResult()!.convertedSize) }}</p>
+                    <p class="text-slate-500 truncate">{{ convertedResult()!.fileName }}</p>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2">
+                  <button (click)="uploadConvertedFile()"
+                    class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-xl transition-colors shadow-md flex items-center justify-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                      <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
+                      <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                    </svg>
+                    Upload to Contentful
+                  </button>
+                  <button (click)="downloadConvertedFile()"
+                    class="py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition-colors border border-slate-600 flex items-center justify-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                      <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+                      <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                    </svg>
+                    Save
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- Error -->
+            @if (converterError()) {
+              <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 flex-shrink-0">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                {{ converterError() }}
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- ═══════════════════ BULK UPLOAD TAB ═══════════════════ -->
+      @if (activeTab() === 'bulk') {
+        <div class="max-w-2xl mx-auto flex flex-col gap-4">
+
+          <!-- Drop Zone -->
+          <label class="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-slate-600 rounded-2xl cursor-pointer hover:border-amber-500/50 hover:bg-slate-800/50 transition-all group">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-amber-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="text-white font-semibold text-sm">Add images</p>
+              <p class="text-slate-400 text-xs mt-1">All formats supported · HEIC auto-converted</p>
+            </div>
+            <input type="file" accept="image/*,.heic,.heif" multiple class="hidden" (change)="onBulkFilesSelected($event)" />
+          </label>
+
+          <!-- File List -->
+          @if (bulkFiles().length > 0) {
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-slate-300">{{ bulkFiles().length }} file{{ bulkFiles().length > 1 ? 's' : '' }} staged</span>
+              <button (click)="clearBulkItems()" class="text-xs text-slate-400 hover:text-red-400 transition-colors">
+                Clear all
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              @for (item of bulkFiles(); track $index) {
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                  <!-- Thumbnail -->
+                  <div class="w-10 h-10 rounded-lg bg-slate-700 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                    @if (item.preview) {
+                      <img [src]="item.preview" alt="Preview" class="w-full h-full object-cover" />
+                    } @else {
+                      <span class="text-[9px] font-bold text-slate-400">{{ getFileExtension(item.file.name) }}</span>
+                    }
+                  </div>
+
+                  <!-- Info -->
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-white truncate">{{ item.file.name }}</p>
+                    <p class="text-[10px] text-slate-400">{{ formatBytes(item.file.size) }}</p>
+                  </div>
+
+                  <!-- Status -->
+                  @switch (item.status) {
+                    @case ('pending') {
+                      <button (click)="removeBulkItem($index)" class="p-1.5 text-slate-400 hover:text-red-400 transition-colors rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                        </svg>
+                      </button>
+                    }
+                    @case ('converting') {
+                      <span class="text-[10px] text-amber-400 font-medium flex items-center gap-1">
+                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Converting
+                      </span>
+                    }
+                    @case ('uploading') {
+                      <span class="text-[10px] text-blue-400 font-medium flex items-center gap-1">
+                        <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Uploading
+                      </span>
+                    }
+                    @case ('done') {
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                      </svg>
+                    }
+                    @case ('error') {
+                      <span class="text-[10px] text-red-400 font-medium truncate max-w-[100px]" [title]="item.error || 'Error'">
+                        ❌ {{ item.error }}
+                      </span>
+                    }
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- Bulk Upload Button -->
+            <button (click)="startBulkUpload()" [disabled]="isBulkUploading()"
+              class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
+              @if (isBulkUploading()) {
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Uploading...
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                  <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
+                  <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                </svg>
+                Upload All to Contentful
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

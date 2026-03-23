@@ -332,4 +332,27 @@ export class ContentfulService {
     // Refresh the assets list
     this.assets.update(items => items.filter((a: any) => a.sys.id !== assetId));
   }
+
+  async renameAsset(assetId: string, newTitle: string): Promise<any> {
+    const env = this.activeEnvironment();
+    if (!env) throw new Error('No active Contentful environment.');
+
+    const asset = await env.getAsset(assetId);
+    asset.fields.title = { 'en-US': newTitle };
+    const updated = await asset.update();
+
+    // If published, re-publish with new title
+    if (updated.sys.publishedVersion) {
+      const republished = await updated.publish();
+      this.assets.update(items =>
+        items.map((a: any) => a.sys.id === assetId ? republished : a)
+      );
+      return republished;
+    }
+
+    this.assets.update(items =>
+      items.map((a: any) => a.sys.id === assetId ? updated : a)
+    );
+    return updated;
+  }
 }

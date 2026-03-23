@@ -27,7 +27,14 @@ Cypressful is a mobile-first, "headless dashboard" Progressive Web App (PWA) des
 7. **Power-Up: Full Entry Lifecycle Control**: Added Unpublish and Delete capabilities to entry cards and the Entries Browser panel. Users can now unpublish published entries (revert to draft) and permanently delete entries — both via UI buttons and through chat AI commands.
 8. **Power-Up: Inline Asset Picker**: Link (Asset) fields in entry cards now show an interactive "Choose Asset" button that opens a media library overlay. Users can browse, select, preview, and replace linked assets directly within entry templates. Linked assets show thumbnails with clear/swap controls.
 9. **Dashboard Component Decomposition**: Broke the monolithic `dashboard.ts` (~607 lines) and `dashboard.html` (~705 lines) into 7 focused child components: `DashboardHeader`, `ContentModelsPanel`, `MediaLibraryPanel`, `EntriesPanel`, `EntryCard`, `AssetPicker`, and `ChatInput`. The dashboard remains a thin orchestrator (~287 lines TS, ~95 lines HTML). A shared `ChatMessage` model was extracted to `models/chat-message.model.ts`.
+10. **Power Tools Panel**: Added a dedicated ⚡ Power Tools overlay with two tabs:
+    - **Image Converter**: Select HEIC/HEIF/WebP/TIFF/BMP/AVIF files, choose output format (JPEG/PNG/WebP), adjust quality with a slider, preview before/after, view size comparison, then upload directly to Contentful or save to device.
+    - **Bulk Upload**: Stage multiple images at once, auto-convert incompatible formats, and upload all to Contentful in parallel with per-file status tracking.
+11. **Smart Chat Upload**: When attaching images via chat, HEIC/HEIF and other incompatible formats are auto-converted to JPEG before staging. Users see conversion status messages in the chat feed.
+12. **Media Library Enhancements**: The Media Library lightbox now features a 2x2 action grid with: Download (saves asset to device), Rename (inline title editing with save/cancel), Copy ID, and Delete. The `renameAsset` method in ContentfulService auto-republishes renamed assets.
+13. **Header Redesign**: Condensed the dashboard header to prioritize Entries & Media library buttons, moving Content Models, Power Tools, Settings, and Logout to a cleaner `⋮` overflow dropdown menu for better responsiveness.
+14. **Editable Arrays & Links**: Enhanced `EntryCard` components to fully support editing `Array` and `Link` (entry reference) fields. Array fields can have items added (strings, entry links, mapped asset picker) or removed inline. Single entry references can be set or cleared via dedicated inputs.
 
 ## Next Steps
-- Implement support for viewing and editing complex field types (Dates, Rich Text, Entry References) within the entry cards.
+- Implement support for viewing and editing complex field types (Dates, Rich Text) within the entry cards.
 - Add batch operations for entries (bulk publish/unpublish/delete).

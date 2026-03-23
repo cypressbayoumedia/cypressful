@@ -100,6 +100,29 @@
 
     <!-- Details Bar -->
     <div class="p-4 bg-slate-900/80 border-t border-slate-800 flex flex-col gap-3">
+      <!-- Title (editable) -->
+      @if (isEditing()) {
+        <div class="flex items-center gap-2">
+          <input
+            type="text"
+            [value]="editTitle()"
+            (input)="editTitle.set($any($event.target).value)"
+            (keyup.enter)="saveRename()"
+            class="flex-1 bg-slate-800 border border-amber-500/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            placeholder="Enter new title..." />
+          <button (click)="saveRename()" class="p-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+              <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <button (click)="cancelRename()" class="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
+        </div>
+      }
+
       <!-- File Details -->
       <div class="flex items-center gap-3 text-xs text-slate-400">
         <span class="bg-slate-800 px-2 py-1 rounded-md border border-slate-700">{{ selectedAsset()?.fields?.file?.['en-US']?.contentType }}</span>
@@ -107,15 +130,28 @@
         <span class="font-mono text-emerald-400/70 text-[10px] truncate flex-1">{{ selectedAsset()?.sys?.id }}</span>
       </div>
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2">
-        <button (click)="copyAssetId(selectedAsset()!.sys.id)" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors border border-slate-700 flex items-center justify-center gap-1.5">
+      <div class="grid grid-cols-2 gap-2">
+        <button (click)="downloadAsset(selectedAsset()!)" class="py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-medium rounded-xl transition-colors border border-blue-500/30 flex items-center justify-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+            <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+            <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+          </svg>
+          Download
+        </button>
+        <button (click)="startRename(selectedAsset()!)" class="py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-medium rounded-xl transition-colors border border-amber-500/30 flex items-center justify-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+            <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+          </svg>
+          Rename
+        </button>
+        <button (click)="copyAssetId(selectedAsset()!.sys.id)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium rounded-xl transition-colors border border-slate-700 flex items-center justify-center gap-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
             <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z" />
             <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z" />
           </svg>
           Copy ID
         </button>
-        <button (click)="onDeleteAsset(selectedAsset()!.sys.id)" class="flex-1 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-xl transition-colors border border-red-500/30 flex items-center justify-center gap-1.5">
+        <button (click)="onDeleteAsset(selectedAsset()!.sys.id)" class="py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-xl transition-colors border border-red-500/30 flex items-center justify-center gap-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
             <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
           </svg>

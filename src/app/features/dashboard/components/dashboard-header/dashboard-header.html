@@ -7,25 +7,27 @@
         <span class="font-bold text-white text-lg">J</span>
       }
     </div>
-    <div class="relative">
+    <div class="relative flex flex-col justify-center">
       <h1 class="text-lg font-bold tracking-tight">Cypressful</h1>
-      <button (click)="toggleSpaceMenu.emit()" class="text-xs text-emerald-400 font-medium flex items-center gap-1 hover:text-emerald-300 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 -ml-1">
-        <span class="w-2 h-2 rounded-full" [class.bg-emerald-400]="isReady()" [class.bg-red-500]="!isReady()"></span>
-        {{ currentSpace()?.name || 'Select Workspace' }}
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
-          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-        </svg>
-      </button>
-
-      @if (configService.config()?.spaceUrls?.[currentSpace()?.sys.id]) {
-        <a [href]="configService.config()?.spaceUrls?.[currentSpace()?.sys.id]" target="_blank" class="absolute -right-6 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-emerald-400 transition-colors" title="Open Live Website">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+      <div class="flex items-center gap-1">
+        <button (click)="toggleSpaceMenu.emit()" class="text-xs text-emerald-400 font-medium flex items-center gap-1 hover:text-emerald-300 transition-colors focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 -ml-1">
+          <span class="w-2 h-2 rounded-full" [class.bg-emerald-400]="isReady()" [class.bg-red-500]="!isReady()"></span>
+          <span class="truncate max-w-[120px] sm:max-w-xs">{{ currentSpace()?.name || 'Select Workspace' }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 shrink-0">
+            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
           </svg>
-        </a>
-      }
+        </button>
 
-      <!-- Dropdown Menu -->
+        @if (configService.config()?.spaceUrls?.[currentSpace()?.sys.id]) {
+          <a [href]="configService.config()?.spaceUrls?.[currentSpace()?.sys.id]" target="_blank" class="p-1 text-slate-400 hover:text-emerald-400 transition-colors shrink-0" title="Open Live Website">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+          </a>
+        }
+      </div>
+
+      <!-- Workspace Dropdown -->
       @if (showSpaceMenu()) {
         <div class="absolute top-full left-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1 z-50 overflow-hidden">
           @for (space of spaces(); track space.sys.id) {
@@ -48,38 +50,90 @@
     </div>
   </div>
   
+  <!-- Right side actions: 2 visible + More menu -->
   <div class="flex items-center gap-1">
-    <!-- Entries Browser Button -->
-    <button (click)="openEntries.emit()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Entries Browser">
+    <!-- Entries Browser — always visible -->
+    <button (click)="openEntries.emit()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50" title="Entries">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
         <path fill-rule="evenodd" d="M2.625 6.75a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0A.75.75 0 018.25 6h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 17.25a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
       </svg>
     </button>
-    <!-- Media Library Button -->
-    <button (click)="openMedia.emit()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Media Library">
+    <!-- Media Library — always visible -->
+    <button (click)="openMedia.emit()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50" title="Media">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
         <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
       </svg>
     </button>
-    <!-- Content Models Button -->
-    <button (click)="toggleModels.emit()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Content Models">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-        <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
-        <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-        <path d="M3.265 15.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
-      </svg>
-    </button>
-    <!-- Settings Button -->
-    <a routerLink="/settings" class="p-2 text-slate-400 hover:text-white transition-colors" title="Settings">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-        <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.097.078.15.226.15.399v.227c0 .173-.053.32-.15.399l-.84.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.098-.078-.15-.226-.15-.399v-.227c0-.173.052-.32.15-.399l.84-.692a1.875 1.875 0 00.432-2.385l-.923-1.597a1.875 1.875 0 00-2.28-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75c2.071 0 3.75-1.679 3.75-3.75s-1.679-3.75-3.75-3.75-3.75 1.679-3.75 3.75 1.679 3.75 3.75 3.75z" clip-rule="evenodd" />
-      </svg>
-    </a>
-    <!-- Logout Button -->
-    <button (click)="logoutClicked.emit()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Sign Out">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-      </svg>
-    </button>
+
+    <!-- More Menu Trigger -->
+    <div class="relative">
+      <button (click)="toggleMore()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50" title="More">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+          <path fill-rule="evenodd" d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      @if (showMoreMenu()) {
+        <!-- Backdrop -->
+        <div class="fixed inset-0 z-40" (click)="closeMore()"></div>
+
+        <div class="absolute right-0 top-full mt-2 w-56 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl shadow-black/50 py-2 z-50 overflow-hidden animate-fade-in-up">
+          
+          <!-- Content Models -->
+          <button (click)="toggleModels.emit(); closeMore()" class="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-slate-700/50 transition-colors flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-emerald-400">
+                <path d="M11.644 1.59a.75.75 0 01.712 0l9.75 5.25a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.712 0l-9.75-5.25a.75.75 0 010-1.32l9.75-5.25z" />
+                <path d="M3.265 10.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
+                <path d="M3.265 15.602l7.668 4.129a2.25 2.25 0 002.134 0l7.668-4.13 1.37.739a.75.75 0 010 1.32l-9.75 5.25a.75.75 0 01-.71 0l-9.75-5.25a.75.75 0 010-1.32l1.37-.738z" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium">Content Models</p>
+              <p class="text-[10px] text-slate-500">View your schema</p>
+            </div>
+          </button>
+
+          <!-- Power Tools -->
+          <button (click)="openPowerTools.emit(); closeMore()" class="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-slate-700/50 transition-colors flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-amber-400">
+                <path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 01.359.852L12.982 9.75h7.268a.75.75 0 01.548 1.262l-10.5 11.25a.75.75 0 01-1.272-.71l1.992-7.302H3.75a.75.75 0 01-.548-1.262l10.5-11.25a.75.75 0 01.913-.143z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium">Power Tools</p>
+              <p class="text-[10px] text-slate-500">Convert & bulk upload</p>
+            </div>
+          </button>
+
+          <div class="border-t border-slate-700 my-1"></div>
+
+          <!-- Settings -->
+          <a routerLink="/settings" (click)="closeMore()" class="w-full text-left px-4 py-3 text-sm text-slate-200 hover:bg-slate-700/50 transition-colors flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-slate-700/50 flex items-center justify-center group-hover:bg-slate-600/50 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-slate-400">
+                <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.097.078.15.226.15.399v.227c0 .173-.053.32-.15.399l-.84.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.098-.078-.15-.226-.15-.399v-.227c0-.173.052-.32.15-.399l.84-.692a1.875 1.875 0 00.432-2.385l-.923-1.597a1.875 1.875 0 00-2.28-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75c2.071 0 3.75-1.679 3.75-3.75s-1.679-3.75-3.75-3.75-3.75 1.679-3.75 3.75 1.679 3.75 3.75 3.75z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium">Settings</p>
+              <p class="text-[10px] text-slate-500">API keys & preferences</p>
+            </div>
+          </a>
+
+          <!-- Sign Out -->
+          <button (click)="logoutClicked.emit(); closeMore()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-red-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </div>
+            <p class="font-medium">Sign Out</p>
+          </button>
+        </div>
+      }
+    </div>
   </div>
 </header>

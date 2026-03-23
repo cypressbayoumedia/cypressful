@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ConfigService } from '../../../../core/services/config';
 
@@ -20,7 +20,17 @@ export class DashboardHeader {
   public openEntries = output<void>();
   public openMedia = output<void>();
   public toggleModels = output<void>();
+  public openPowerTools = output<void>();
   public logoutClicked = output<void>();
 
   public configService = inject(ConfigService);
+  public showMoreMenu = signal(false);
+
+  toggleMore() {
+    this.showMoreMenu.update(v => !v);
+  }
+
+  closeMore() {
+    this.showMoreMenu.set(false);
+  }
 }

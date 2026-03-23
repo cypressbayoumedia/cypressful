@@ -11,6 +11,7 @@
     (openEntries)="openEntriesPanel()"
     (openMedia)="openMediaPanel()"
     (toggleModels)="showModelsPanel.set(!showModelsPanel())"
+    (openPowerTools)="openPowerTools()"
     (logoutClicked)="logout()"
   />
 
@@ -28,6 +29,7 @@
     [assetsLoading]="contentfulService.assetsLoading()"
     (closed)="showMediaPanel.set(false)"
     (deleteAsset)="onDeleteAsset($event)"
+    (renameAsset)="onRenameAsset($event)"
   />
 
   <!-- Entries Panel Overlay -->
@@ -49,6 +51,14 @@
     [assetsLoading]="contentfulService.assetsLoading()"
     (closed)="showAssetPicker.set(false); assetPickerTarget.set(null)"
     (assetSelected)="selectAssetForField($event)"
+  />
+
+  <!-- Power Tools Overlay Panel -->
+  <app-power-tools-panel
+    [show]="showPowerTools()"
+    (closed)="showPowerTools.set(false)"
+    (uploadConverted)="uploadConvertedFile($event)"
+    (uploadBulk)="uploadBulkFiles($event)"
   />
 
   <!-- Chat Area -->

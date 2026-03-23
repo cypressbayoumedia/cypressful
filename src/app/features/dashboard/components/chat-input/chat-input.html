@@ -60,7 +60,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
     </button>
-    <input #fileInput type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)" [disabled]="isLoading()">
+    <input #fileInput type="file" accept="image/*,.heic,.heif" class="hidden" (change)="onFileSelected($event)" [disabled]="isLoading()">
 
     <!-- Input Field -->
     <input 

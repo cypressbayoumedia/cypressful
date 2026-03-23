@@ -12,8 +12,11 @@ export class MediaLibraryPanel {
 
   public closed = output<void>();
   public deleteAsset = output<string>();
+  public renameAsset = output<{ assetId: string; newTitle: string }>();
 
   public selectedAsset = signal<any | null>(null);
+  public isEditing = signal(false);
+  public editTitle = signal('');
 
   getAssetUrl(asset: any): string | null {
     const file = asset?.fields?.file?.['en-US'];
@@ -46,6 +49,41 @@ export class MediaLibraryPanel {
 
   onClose() {
     this.selectedAsset.set(null);
+    this.isEditing.set(false);
     this.closed.emit();
+  }
+
+  async downloadAsset(asset: any) {
+    const url = this.getAssetUrl(asset);
+    if (!url) return;
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const fileName = asset.fields?.file?.['en-US']?.fileName || 'download';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
+  }
+
+  startRename(asset: any) {
+    this.editTitle.set(asset.fields?.title?.['en-US'] || '');
+    this.isEditing.set(true);
+  }
+
+  cancelRename() {
+    this.isEditing.set(false);
+    this.editTitle.set('');
+  }
+
+  saveRename() {
+    const asset = this.selectedAsset();
+    if (!asset || !this.editTitle().trim()) return;
+    this.renameAsset.emit({ assetId: asset.sys.id, newTitle: this.editTitle().trim() });
+    this.isEditing.set(false);
   }
 }

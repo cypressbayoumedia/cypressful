@@ -58,4 +58,99 @@ export class EntryCard {
   onClearAsset(fieldId: string) {
     this.clearAsset.emit({ msgId: this.message().id, fieldId });
   }
+
+  getFieldValueAsJson(fieldId: string): string {
+    const val = this.message().cardData.fields[fieldId]?.['en-US'];
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    try {
+      return JSON.stringify(val, null, 2);
+    } catch {
+      return '';
+    }
+  }
+
+  onJsonFieldUpdate(fieldId: string, value: string) {
+    let parsed = value;
+    try {
+      parsed = JSON.parse(value);
+    } catch {}
+    this.onFieldUpdate(fieldId, parsed);
+  }
+
+  // --- Array field helpers ---
+
+  getArrayItems(fieldId: string): any[] {
+    const val = this.message().cardData.fields[fieldId]?.['en-US'];
+    return Array.isArray(val) ? val : [];
+  }
+
+  isLinkArray(fieldId: string): boolean {
+    const items = this.getArrayItems(fieldId);
+    return items.length > 0 && items[0]?.sys?.type === 'Link';
+  }
+
+  getLinkedEntryTitle(linkValue: any): string {
+    if (!linkValue?.sys?.id) return 'Unknown';
+    // For entries, we don't have them loaded in the card — just show the ID
+    return linkValue.sys.id;
+  }
+
+  isAssetLink(item: any): boolean {
+    return item?.sys?.linkType === 'Asset';
+  }
+
+  isEntryLink(item: any): boolean {
+    return item?.sys?.linkType === 'Entry';
+  }
+
+  getArrayItemLabel(item: any): string {
+    if (!item) return '';
+    if (typeof item === 'string') return item;
+    if (item?.sys?.type === 'Link') {
+      const type = item.sys.linkType === 'Asset' ? '🖼️' : '📄';
+      const title = item.sys.linkType === 'Asset'
+        ? this.getLinkedAssetTitle(item)
+        : item.sys.id;
+      return `${type} ${title}`;
+    }
+    return JSON.stringify(item);
+  }
+
+  // --- Editable helpers ---
+
+  removeArrayItem(fieldId: string, index: number) {
+    const arr = [...this.getArrayItems(fieldId)];
+    arr.splice(index, 1);
+    this.onFieldUpdate(fieldId, arr);
+  }
+
+  addStringToArray(fieldId: string, inputElement: HTMLInputElement) {
+    const value = inputElement.value;
+    if (!value.trim()) return;
+    const arr = [...this.getArrayItems(fieldId)];
+    arr.push(value.trim());
+    this.onFieldUpdate(fieldId, arr);
+    inputElement.value = '';
+  }
+
+  addEntryLinkToArray(fieldId: string, inputElement: HTMLInputElement) {
+    const entryId = inputElement.value;
+    if (!entryId.trim()) return;
+    const arr = [...this.getArrayItems(fieldId)];
+    arr.push({ sys: { type: 'Link', linkType: 'Entry', id: entryId.trim() } });
+    this.onFieldUpdate(fieldId, arr);
+    inputElement.value = '';
+  }
+
+  setSingleEntryLink(fieldId: string, inputElement: HTMLInputElement) {
+    const entryId = inputElement.value;
+    if (!entryId.trim()) return;
+    this.onFieldUpdate(fieldId, { sys: { type: 'Link', linkType: 'Entry', id: entryId.trim() } });
+    inputElement.value = '';
+  }
+
+  clearSingleEntryLink(fieldId: string) {
+    this.onFieldUpdate(fieldId, null);
+  }
 }

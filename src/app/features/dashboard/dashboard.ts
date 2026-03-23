@@ -12,6 +12,8 @@ import { EntriesPanel } from './components/entries-panel/entries-panel';
 import { EntryCard } from './components/entry-card/entry-card';
 import { AssetPicker } from './components/asset-picker/asset-picker';
 import { ChatInput } from './components/chat-input/chat-input';
+import { PowerToolsPanel } from './components/power-tools-panel/power-tools-panel';
+import { ImageToolsService } from '../../core/services/image-tools.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,6 +25,7 @@ import { ChatInput } from './components/chat-input/chat-input';
     EntryCard,
     AssetPicker,
     ChatInput,
+    PowerToolsPanel,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -33,6 +36,7 @@ export class Dashboard {
   private voiceService = inject(VoiceService);
   public contentfulService = inject(ContentfulService);
   private geminiService = inject(GeminiService);
+  private imageTools = inject(ImageToolsService);
 
   public user = this.authService.currentUser;
   public currentSpace = this.contentfulService.activeSpace;
@@ -44,6 +48,7 @@ export class Dashboard {
   public showMediaPanel = signal(false);
   public showEntriesPanel = signal(false);
   public showAssetPicker = signal(false);
+  public showPowerTools = signal(false);
   public assetPickerTarget = signal<{ msgId: string; fieldId: string } | null>(null);
 
   // Voice state
@@ -94,6 +99,41 @@ export class Dashboard {
     this.contentfulService.fetchEntries();
   }
 
+  // --- Power Tools actions ---
+  openPowerTools() {
+    this.showPowerTools.set(true);
+  }
+
+  async uploadConvertedFile(file: File) {
+    this.showPowerTools.set(false);
+    try {
+      const asset = await this.contentfulService.uploadAsset(file);
+      this.addSystemMessage(`✅ Converted image uploaded: ${file.name} (Asset ID: ${asset.sys.id})`);
+      this.contentfulService.fetchAssets();
+    } catch (err: any) {
+      this.addSystemMessage(`❌ Upload failed: ${err.message}`);
+    }
+  }
+
+  async uploadBulkFiles(files: File[]) {
+    this.addSystemMessage(`📤 Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`);
+    let successes = 0;
+    let failures = 0;
+    for (const file of files) {
+      try {
+        await this.contentfulService.uploadAsset(file);
+        successes++;
+      } catch {
+        failures++;
+      }
+    }
+    const msg = failures > 0
+      ? `✅ Uploaded ${successes}/${files.length} files (${failures} failed)`
+      : `✅ All ${successes} files uploaded successfully!`;
+    this.addSystemMessage(msg);
+    this.contentfulService.fetchAssets();
+  }
+
   // --- Media panel actions ---
   async onDeleteAsset(assetId: string) {
     try {
@@ -101,6 +141,15 @@ export class Dashboard {
     } catch (err: any) {
       console.error('Failed to delete asset:', err);
       alert('Failed to delete asset: ' + err.message);
+    }
+  }
+
+  async onRenameAsset(event: { assetId: string; newTitle: string }) {
+    try {
+      await this.contentfulService.renameAsset(event.assetId, event.newTitle);
+    } catch (err: any) {
+      console.error('Failed to rename asset:', err);
+      alert('Failed to rename asset: ' + err.message);
     }
   }
 
@@ -257,11 +306,28 @@ export class Dashboard {
   selectAssetForField(asset: any) {
     const target = this.assetPickerTarget();
     if (!target) return;
-    this.updateCardField({
-      msgId: target.msgId,
-      fieldId: target.fieldId,
-      value: { sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }
-    });
+    
+    const msg = this.messages().find(m => m.id === target.msgId);
+    if (!msg || !msg.cardData || !msg.cardContentType) return;
+
+    const fieldDef = msg.cardContentType.fields?.find((f: any) => f.id === target.fieldId);
+    const isArray = fieldDef?.type === 'Array';
+    
+    if (isArray) {
+      const currentArray = msg.cardData.fields[target.fieldId]?.['en-US'] || [];
+      this.updateCardField({
+        msgId: target.msgId,
+        fieldId: target.fieldId,
+        value: [...currentArray, { sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }]
+      });
+    } else {
+      this.updateCardField({
+        msgId: target.msgId,
+        fieldId: target.fieldId,
+        value: { sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }
+      });
+    }
+    
     this.showAssetPicker.set(false);
     this.assetPickerTarget.set(null);
   }
@@ -300,13 +366,32 @@ export class Dashboard {
     setTimeout(() => this.scrollToBottom(), 100);
   }
 
-  onFileSelected(file: File) {
-    this.stagedImage.set(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.stagedImageBase64.set(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  async onFileSelected(file: File) {
+    // Auto-convert HEIC/HEIF and other incompatible formats
+    if (this.imageTools.isConvertible(file)) {
+      this.addSystemMessage(`🔄 Converting ${file.name} to JPEG...`);
+      try {
+        const converted = await this.imageTools.autoConvert(file);
+        this.stagedImage.set(converted);
+        const base64 = await this.imageTools.blobToDataUrl(converted);
+        this.stagedImageBase64.set(base64);
+        this.addSystemMessage(`✅ Converted to ${converted.name}`);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Conversion failed';
+        this.addSystemMessage(`❌ Conversion failed: ${message}. Staging original file.`);
+        this.stagedImage.set(file);
+        const reader = new FileReader();
+        reader.onload = () => this.stagedImageBase64.set(reader.result as string);
+        reader.readAsDataURL(file);
+      }
+    } else {
+      this.stagedImage.set(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.stagedImageBase64.set(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   async sendMessage(text: string) {
