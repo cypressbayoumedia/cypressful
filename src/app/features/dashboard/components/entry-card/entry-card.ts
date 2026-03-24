@@ -20,6 +20,14 @@ export class EntryCard {
   public updateField = output<{ msgId: string; fieldId: string; value: any }>();
   public openAssetPicker = output<{ msgId: string; fieldId: string }>();
   public clearAsset = output<{ msgId: string; fieldId: string }>();
+  public duplicate = output<string>();
+
+  async copyEntryId() {
+    const id = this.message()?.cardData?.sys?.id;
+    if (id) {
+      await navigator.clipboard.writeText(id);
+    }
+  }
 
   getEntryStatus(entry: any): string {
     if (entry.sys.archivedVersion) return 'Archived';

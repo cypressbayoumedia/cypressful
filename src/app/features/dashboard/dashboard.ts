@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
 import { VoiceService } from '../../core/services/voice.service';
@@ -14,6 +14,7 @@ import { AssetPicker } from './components/asset-picker/asset-picker';
 import { ChatInput } from './components/chat-input/chat-input';
 import { PowerToolsPanel } from './components/power-tools-panel/power-tools-panel';
 import { ImageToolsService } from '../../core/services/image-tools.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,6 +38,7 @@ export class Dashboard {
   public contentfulService = inject(ContentfulService);
   private geminiService = inject(GeminiService);
   private imageTools = inject(ImageToolsService);
+  private toast = inject(ToastService);
 
   public user = this.authService.currentUser;
   public currentSpace = this.contentfulService.activeSpace;
@@ -79,6 +81,16 @@ export class Dashboard {
     });
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    if (this.showAssetPicker()) { this.showAssetPicker.set(false); this.assetPickerTarget.set(null); }
+    else if (this.showPowerTools()) { this.showPowerTools.set(false); }
+    else if (this.showEntriesPanel()) { this.showEntriesPanel.set(false); }
+    else if (this.showMediaPanel()) { this.showMediaPanel.set(false); }
+    else if (this.showModelsPanel()) { this.showModelsPanel.set(false); }
+    else if (this.showSpaceMenu()) { this.showSpaceMenu.set(false); }
+  }
+
   // --- Header actions ---
   async logout() {
     await this.authService.logout();
@@ -108,15 +120,15 @@ export class Dashboard {
     this.showPowerTools.set(false);
     try {
       const asset = await this.contentfulService.uploadAsset(file);
-      this.addSystemMessage(`✅ Converted image uploaded: ${file.name} (Asset ID: ${asset.sys.id})`);
+      this.toast.success(`Converted image uploaded: ${file.name}`);
       this.contentfulService.fetchAssets();
     } catch (err: any) {
-      this.addSystemMessage(`❌ Upload failed: ${err.message}`);
+      this.toast.error(`Upload failed: ${this.parseContentfulError(err)}`);
     }
   }
 
   async uploadBulkFiles(files: File[]) {
-    this.addSystemMessage(`📤 Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`);
+    this.toast.info(`Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`);
     let successes = 0;
     let failures = 0;
     for (const file of files) {
@@ -127,10 +139,11 @@ export class Dashboard {
         failures++;
       }
     }
-    const msg = failures > 0
-      ? `✅ Uploaded ${successes}/${files.length} files (${failures} failed)`
-      : `✅ All ${successes} files uploaded successfully!`;
-    this.addSystemMessage(msg);
+    if (failures > 0) {
+      this.toast.warning(`Uploaded ${successes}/${files.length} files (${failures} failed)`);
+    } else {
+      this.toast.success(`All ${successes} files uploaded successfully!`);
+    }
     this.contentfulService.fetchAssets();
   }
 
@@ -138,18 +151,18 @@ export class Dashboard {
   async onDeleteAsset(assetId: string) {
     try {
       await this.contentfulService.deleteAsset(assetId);
+      this.toast.success('Asset deleted.');
     } catch (err: any) {
-      console.error('Failed to delete asset:', err);
-      alert('Failed to delete asset: ' + err.message);
+      this.toast.error('Failed to delete asset: ' + this.parseContentfulError(err));
     }
   }
 
   async onRenameAsset(event: { assetId: string; newTitle: string }) {
     try {
       await this.contentfulService.renameAsset(event.assetId, event.newTitle);
+      this.toast.success('Asset renamed.');
     } catch (err: any) {
-      console.error('Failed to rename asset:', err);
-      alert('Failed to rename asset: ' + err.message);
+      this.toast.error('Failed to rename asset: ' + this.parseContentfulError(err));
     }
   }
 
@@ -179,8 +192,9 @@ export class Dashboard {
     try {
       await this.contentfulService.unpublishEntry(entry.sys.id);
       this.contentfulService.fetchEntries();
+      this.toast.success('Entry unpublished.');
     } catch (err: any) {
-      alert('Unpublish failed: ' + err.message);
+      this.toast.error('Unpublish failed: ' + this.parseContentfulError(err));
     }
   }
 
@@ -188,8 +202,9 @@ export class Dashboard {
     try {
       await this.contentfulService.deleteEntry(entry.sys.id);
       this.contentfulService.fetchEntries();
+      this.toast.success('Entry deleted.');
     } catch (err: any) {
-      alert('Delete failed: ' + err.message);
+      this.toast.error('Delete failed: ' + this.parseContentfulError(err));
     }
   }
 
@@ -230,10 +245,10 @@ export class Dashboard {
         content: isCreate ? `Created ${msg.cardContentType?.name}` : `Updated ${msg.cardContentType?.name}`
       } as ChatMessage : m));
 
-      this.addSystemMessage('✅ Saved successfully to Contentful.');
+      this.toast.success('Saved successfully to Contentful.');
     } catch (err: any) {
       console.error(err);
-      this.addSystemMessage(`❌ Save failed: ${err.message}`);
+      this.toast.error(`Save failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
@@ -247,10 +262,10 @@ export class Dashboard {
     try {
       const published = await this.contentfulService.publishEntry(msg.cardData.sys.id);
       this.messages.update(msgs => msgs.map(m => m.id === msgId ? { ...m, cardData: published } : m));
-      this.addSystemMessage('✅ Entry published live!');
+      this.toast.success('Entry published live!');
     } catch (err: any) {
       console.error(err);
-      this.addSystemMessage(`❌ Publish failed: ${err.message}`);
+      this.toast.error(`Publish failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
@@ -264,10 +279,10 @@ export class Dashboard {
     try {
       const unpublished = await this.contentfulService.unpublishEntry(msg.cardData.sys.id);
       this.messages.update(msgs => msgs.map(m => m.id === msgId ? { ...m, cardData: unpublished } : m));
-      this.addSystemMessage('⬇️ Entry unpublished — reverted to draft.');
+      this.toast.success('Entry unpublished — reverted to draft.');
     } catch (err: any) {
       console.error(err);
-      this.addSystemMessage(`❌ Unpublish failed: ${err.message}`);
+      this.toast.error(`Unpublish failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
@@ -286,14 +301,40 @@ export class Dashboard {
         cardData: { ...m.cardData, _deleted: true },
         content: `Deleted ${msg.cardContentType?.name || 'entry'}`
       } : m));
-      this.addSystemMessage('🗑️ Entry permanently deleted from Contentful.');
+      this.toast.success('Entry permanently deleted.');
     } catch (err: any) {
       console.error(err);
-      this.addSystemMessage(`❌ Delete failed: ${err.message}`);
+      this.toast.error(`Delete failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
     }
+  }
+
+  duplicateEntryCard(msgId: string) {
+    const msg = this.messages().find(m => m.id === msgId);
+    if (!msg || !msg.cardData || !msg.cardContentType) return;
+    
+    const clonedFields = JSON.parse(JSON.stringify(msg.cardData.fields || {}));
+    const blankEntry = {
+      sys: { id: null, type: 'Entry', contentType: { sys: { id: msg.cardContentType.sys.id } } },
+      fields: clonedFields
+    };
+
+    this.messages.update(msgs => [
+      ...msgs,
+      {
+        id: Date.now().toString(),
+        role: 'user',
+        type: 'entry-card',
+        content: `Duplicate of ${msg.cardContentType?.name || 'entry'}`,
+        timestamp: new Date(),
+        cardData: blankEntry,
+        cardContentType: msg.cardContentType
+      } as ChatMessage
+    ]);
+    this.toast.info('Entry duplicated — edit and save as a new entry.');
+    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   // --- Asset picker actions ---
@@ -369,16 +410,16 @@ export class Dashboard {
   async onFileSelected(file: File) {
     // Auto-convert HEIC/HEIF and other incompatible formats
     if (this.imageTools.isConvertible(file)) {
-      this.addSystemMessage(`🔄 Converting ${file.name} to JPEG...`);
+      this.toast.info(`Converting ${file.name} to JPEG...`);
       try {
         const converted = await this.imageTools.autoConvert(file);
         this.stagedImage.set(converted);
         const base64 = await this.imageTools.blobToDataUrl(converted);
         this.stagedImageBase64.set(base64);
-        this.addSystemMessage(`✅ Converted to ${converted.name}`);
+        this.toast.success(`Converted to ${converted.name}`);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Conversion failed';
-        this.addSystemMessage(`❌ Conversion failed: ${message}. Staging original file.`);
+        this.toast.warning(`Conversion failed: ${message}. Staging original file.`);
         this.stagedImage.set(file);
         const reader = new FileReader();
         reader.onload = () => this.stagedImageBase64.set(reader.result as string);
@@ -498,6 +539,17 @@ export class Dashboard {
       ...msgs,
       { id: Date.now().toString() + '_sys', role: 'assistant', content, timestamp: new Date() }
     ]);
+  }
+
+  private parseContentfulError(err: any): string {
+    if (err?.details?.errors?.length) {
+      return err.details.errors.map((e: any) => {
+        const field = e.path?.join(' → ') || '';
+        const detail = e.details || e.name || 'Unknown error';
+        return field ? `${field}: ${detail}` : detail;
+      }).join('; ');
+    }
+    return err?.message || 'Unknown error';
   }
 
   ngAfterViewChecked() {

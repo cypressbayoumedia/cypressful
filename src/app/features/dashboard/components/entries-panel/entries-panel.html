@@ -20,6 +20,12 @@
             <option [value]="ct.sys.id">{{ ct.name }}</option>
           }
         </select>
+        <input 
+          type="text"
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          placeholder="Search entries..."
+          class="mt-1 bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-3 py-1.5 outline-none focus:border-emerald-500 placeholder-slate-500 w-full">
       </div>
       <button (click)="closed.emit()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800 self-start">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">

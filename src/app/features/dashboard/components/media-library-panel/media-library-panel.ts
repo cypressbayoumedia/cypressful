@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal, computed } from '@angular/core';
 
 @Component({
   selector: 'app-media-library-panel',
@@ -17,6 +17,17 @@ export class MediaLibraryPanel {
   public selectedAsset = signal<any | null>(null);
   public isEditing = signal(false);
   public editTitle = signal('');
+  public searchQuery = signal('');
+
+  public filteredAssets = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return this.assets();
+    return this.assets().filter((a: any) => {
+      const title = (a.fields?.title?.['en-US'] || '').toLowerCase();
+      const fileName = (a.fields?.file?.['en-US']?.fileName || '').toLowerCase();
+      return title.includes(q) || fileName.includes(q);
+    });
+  });
 
   getAssetUrl(asset: any): string | null {
     const file = asset?.fields?.file?.['en-US'];

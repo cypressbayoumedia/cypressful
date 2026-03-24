@@ -94,6 +94,7 @@
               (updateField)="updateCardField($event)"
               (openAssetPicker)="openAssetPickerForField($event)"
               (clearAsset)="clearAssetField($event)"
+              (duplicate)="duplicateEntryCard($event)"
             />
           } @else {
             @if (msg.inlineData?.data) {

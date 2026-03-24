@@ -17,12 +17,23 @@ export class EntriesPanel {
   public deleteEntry = output<any>();
 
   public entryFilter = signal<string>('');
+  public searchQuery = signal('');
 
   public filteredEntries = computed(() => {
-    return this.entries().filter((e: any) => {
-      if (!this.entryFilter()) return true;
-      return e.sys.contentType.sys.id === this.entryFilter();
-    });
+    let entries = this.entries();
+    if (this.entryFilter()) {
+      entries = entries.filter((e: any) => e.sys.contentType.sys.id === this.entryFilter());
+    }
+    const q = this.searchQuery().toLowerCase().trim();
+    if (q) {
+      entries = entries.filter((e: any) => {
+        const title = (e.fields?.title?.['en-US'] || '').toLowerCase();
+        const name = (e.fields?.name?.['en-US'] || '').toLowerCase();
+        const internal = (e.fields?.internalName?.['en-US'] || '').toLowerCase();
+        return title.includes(q) || name.includes(q) || internal.includes(q);
+      });
+    }
+    return entries;
   });
 
   getEntryStatus(entry: any): string {

@@ -7,13 +7,22 @@
           <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
         </svg>
         <h2 class="text-lg font-bold text-white">Media Library</h2>
-        <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ assets().length }}</span>
+        <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-medium">{{ filteredAssets().length }}</span>
       </div>
-      <button (click)="onClose()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
+      <button (click)="onClose()" class="p-2 text-slate-400 hover:text-white transition-colors rounded-full hover:bg-slate-800 self-start">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
           <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
         </svg>
       </button>
+    </div>
+    <!-- Search -->
+    <div class="px-4 pb-2">
+      <input 
+        type="text"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        placeholder="Search assets..."
+        class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-emerald-500 placeholder-slate-500">
     </div>
 
     <!-- Asset Grid -->
@@ -31,7 +40,7 @@
             </div>
           }
         </div>
-      } @else if (assets().length === 0) {
+      } @else if (filteredAssets().length === 0) {
         <!-- Empty State -->
         <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8 min-h-[300px]">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-12 h-12 text-slate-600">
@@ -43,7 +52,7 @@
       } @else {
         <!-- Asset Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-          @for (asset of assets(); track asset.sys.id) {
+          @for (asset of filteredAssets(); track asset.sys.id) {
             <button (click)="selectedAsset.set(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-500/50 transition-all hover:shadow-emerald-500/10 text-left group">
               <!-- Thumbnail -->
               <div class="w-full h-28 bg-slate-700 flex items-center justify-center overflow-hidden">
