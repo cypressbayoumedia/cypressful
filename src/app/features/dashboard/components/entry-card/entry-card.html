@@ -31,8 +31,8 @@
       } @else if (field.type === 'Integer' || field.type === 'Number') {
         <input 
           type="number"
-          [value]="message().cardData.fields[field.id]?.['en-US'] || ''"
-          (input)="onFieldUpdate(field.id, $any($event.target).value)"
+          [value]="message().cardData.fields[field.id]?.['en-US'] ?? ''"
+          (input)="onFieldUpdate(field.id, $any($event.target).value === '' ? null : (field.type === 'Integer' ? parseInt($any($event.target).value, 10) : parseFloat($any($event.target).value)))"
           class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
       } @else if (field.type === 'Boolean') {
         <select
