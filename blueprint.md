@@ -35,6 +35,9 @@ Cypressful is a mobile-first, "headless dashboard" Progressive Web App (PWA) des
 13. **Header Redesign**: Condensed the dashboard header to prioritize Entries & Media library buttons, moving Content Models, Power Tools, Settings, and Logout to a cleaner `⋮` overflow dropdown menu for better responsiveness.
 14. **Editable Arrays & Links**: Enhanced `EntryCard` components to fully support editing `Array` and `Link` (entry reference) fields. Array fields can have items added (strings, entry links, mapped asset picker) or removed inline. Single entry references can be set or cleared via dedicated inputs.
 
+15. **Rich Text Adapter**: Added support for Contentful `RichText` fields. A simple adapter parses the complex AST into plain text for editing inside `<textarea>` elements, and reconstructs the base JSON document when saving.
+16. **Offline Draft Auto-save**: Local storage automatically saves the active chat session (and open entry cards) after every interaction. Refreshing the page restores all un-saved entry cards and chat history. The header overflow menu includes a "Clear Chat" button to wipe the storage.
+
 ## Next Steps
-- Implement support for viewing and editing complex field types (Dates, Rich Text) within the entry cards.
+- Implement support for viewing and editing Date field types within entry cards.
 - Add batch operations for entries (bulk publish/unpublish/delete).

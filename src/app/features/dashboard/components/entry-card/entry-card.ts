@@ -59,6 +59,53 @@ export class EntryCard {
     this.updateField.emit({ msgId: this.message().id, fieldId, value });
   }
 
+  // --- Rich Text Handlers ---
+  extractRichText(richTextObj: any): string {
+    if (!richTextObj || !richTextObj.content) return '';
+    
+    let text = '';
+    const walk = (nodes: any[]) => {
+      for (const node of nodes) {
+        if (node.nodeType === 'text') {
+          text += node.value || '';
+        } else if (node.content) {
+          walk(node.content);
+        }
+        if (node.nodeType === 'paragraph') {
+          text += '\n'; // Add newline for paragraphs
+        }
+      }
+    };
+    walk(richTextObj.content);
+    return text.trim();
+  }
+
+  onRichTextUpdate(fieldId: string, value: string) {
+    if (!value.trim()) {
+      this.onFieldUpdate(fieldId, null);
+      return;
+    }
+
+    const paragraphs = value.split('\n').filter(p => p.trim() !== '');
+    
+    const richTextObj = {
+      nodeType: 'document',
+      data: {},
+      content: paragraphs.map(p => ({
+        nodeType: 'paragraph',
+        data: {},
+        content: [{
+          nodeType: 'text',
+          value: p,
+          marks: [],
+          data: {}
+        }]
+      }))
+    };
+
+    this.onFieldUpdate(fieldId, richTextObj);
+  }
+
   onOpenAssetPicker(fieldId: string) {
     this.openAssetPicker.emit({ msgId: this.message().id, fieldId });
   }

@@ -28,6 +28,12 @@
           (input)="onFieldUpdate(field.id, $any($event.target).value)"
           class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none resize-none min-h-[60px]"
           placeholder="Enter {{ field.name | lowercase }}..."></textarea>
+      } @else if (field.type === 'RichText') {
+        <textarea 
+          [value]="extractRichText(message().cardData.fields[field.id]?.['en-US'])"
+          (input)="onRichTextUpdate(field.id, $any($event.target).value)"
+          class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none resize-y min-h-[120px]"
+          placeholder="Enter {{ field.name | lowercase }} (plain text adapter)..."></textarea>
       } @else if (field.type === 'Integer' || field.type === 'Number') {
         <input 
           type="number"

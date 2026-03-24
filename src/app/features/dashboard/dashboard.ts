@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild, ElementRef, effect } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
 import { VoiceService } from '../../core/services/voice.service';
@@ -58,14 +58,24 @@ export class Dashboard {
   public messageInput = signal('');
 
   // Chat state
-  public messages = signal<ChatMessage[]>([
-    {
+  public messages = signal<ChatMessage[]>(this.loadSession());
+
+  private loadSession(): ChatMessage[] {
+    const saved = localStorage.getItem('cypressful_session');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Failed to parse saved session', e);
+      }
+    }
+    return [{
       id: '1',
       role: 'assistant',
       content: 'Hello James. I am ready to update Contentful. What would you like to do?',
       timestamp: new Date()
-    }
-  ]);
+    }];
+  }
 
   public stagedImage = signal<File | null>(null);
   public stagedImageBase64 = signal<string | null>(null);
@@ -78,6 +88,10 @@ export class Dashboard {
       if (transcript) {
         this.messageInput.set(transcript);
       }
+    });
+
+    effect(() => {
+      localStorage.setItem('cypressful_session', JSON.stringify(this.messages()));
     });
   }
 
@@ -99,6 +113,17 @@ export class Dashboard {
   onSelectSpace(spaceId: string) {
     this.contentfulService.selectSpace(spaceId);
     this.showSpaceMenu.set(false);
+  }
+
+  clearSession() {
+    localStorage.removeItem('cypressful_session');
+    this.messages.set([{
+      id: Date.now().toString(),
+      role: 'assistant',
+      content: 'Session cleared. What would you like to do?',
+      timestamp: new Date()
+    }]);
+    this.toast.success('Chat session cleared.');
   }
 
   openMediaPanel() {
