@@ -104,28 +104,21 @@ export class ContentfulService {
       console.log('Created entry successfully:', entry);
       return entry;
     } else if (action.intent === 'publish') {
-      if (!action.entryId) throw new Error('No entryId provided to publish.');
-      console.log('Publishing entry:', action.entryId);
-      const entry = await env.getEntry(action.entryId);
+      const entry = await this.resolveEntry(env, action, 'publish');
+      console.log('Publishing entry:', entry.sys.id);
       const published = await entry.publish();
       console.log('Published entry successfully:', published);
       return published;
     } else if (action.intent === 'unpublish') {
-      if (!action.entryId) throw new Error('No entryId provided to unpublish.');
-      console.log('Unpublishing entry:', action.entryId);
-      const entry = await env.getEntry(action.entryId);
+      const entry = await this.resolveEntry(env, action, 'unpublish');
+      console.log('Unpublishing entry:', entry.sys.id);
       const unpublished = await entry.unpublish();
       console.log('Unpublished entry successfully:', unpublished);
       return unpublished;
     } else if (action.intent === 'delete') {
-      let entryId = action.entryId;
-      if (!entryId && action.entryTitle && action.contentTypeId) {
-        const found = await this.findEntryByTitle(env, action.contentTypeId, action.entryTitle);
-        entryId = found.sys.id;
-      }
-      if (!entryId) throw new Error('No entryId or entryTitle provided to delete.');
+      const entry = await this.resolveEntry(env, action, 'delete');
+      const entryId = entry.sys.id;
       console.log('Deleting entry:', entryId);
-      const entry = await env.getEntry(entryId);
       if (entry.sys.publishedVersion) {
         await entry.unpublish();
       }
@@ -133,20 +126,10 @@ export class ContentfulService {
       console.log('Entry deleted:', entryId);
       return { deleted: true, entryId };
     } else if (action.intent === 'update') {
-      let entry: any;
-
-      if (action.entryId) {
-        console.log('Updating entry by ID:', action.entryId);
-        entry = await env.getEntry(action.entryId);
-      } else if (action.entryTitle && action.contentTypeId) {
-        console.log('Resolving entry by title:', action.entryTitle);
-        entry = await this.findEntryByTitle(env, action.contentTypeId, action.entryTitle);
-      } else {
-        throw new Error('Update requires either an entryId or an entryTitle + contentTypeId.');
-      }
+      const entry = await this.resolveEntry(env, action, 'update');
 
       // Merge the new fields into the existing entry
-      for (const [fieldKey, fieldValue] of Object.entries(action.fields)) {
+      for (const [fieldKey, fieldValue] of Object.entries(action.fields || {})) {
         entry.fields[fieldKey] = fieldValue;
       }
 
@@ -169,6 +152,45 @@ export class ContentfulService {
     }
   }
 
+  private isValidId(id?: string): boolean {
+    return !!id && id.length > 5 && !id.includes(' ');
+  }
+
+  private async resolveEntry(env: any, action: any, actionName: string): Promise<any> {
+    const entryId = action.entryId;
+    const entryTitle = action.entryTitle || (!this.isValidId(entryId) ? entryId : undefined);
+    
+    let entry: any;
+
+    if (entryId && this.isValidId(entryId)) {
+      try {
+        console.log(`Resolving entry by ID for ${actionName}:`, entryId);
+        entry = await env.getEntry(entryId);
+      } catch (e: any) {
+        if ((e.name === 'NotFound' || (e.message && e.message.includes('404')) || (e.sys && e.sys.id === 'NotFound')) && action.contentTypeId) {
+          console.log(`ID ${entryId} not found. Falling back to title search for ${actionName}...`);
+          try {
+            entry = await this.findEntryByTitle(env, action.contentTypeId, entryTitle || entryId);
+          } catch (fallbackError) {
+            throw e; // Throw original 404 if fallback fails
+          }
+        } else {
+          throw e; // Not a 404, throw error
+        }
+      }
+    } else if (entryTitle && action.contentTypeId) {
+      console.log(`Resolving entry by title for ${actionName}:`, entryTitle);
+      entry = await this.findEntryByTitle(env, action.contentTypeId, entryTitle);
+    } else if (entryId && action.contentTypeId) {
+      console.log(`Resolving entry by title (fallback) for ${actionName}:`, entryId);
+      entry = await this.findEntryByTitle(env, action.contentTypeId, entryId);
+    } else {
+      throw new Error(`Action '${actionName}' requires a valid entryId, or an entryTitle with a contentTypeId.`);
+    }
+
+    return entry;
+  }
+
   /**
    * Find an entry by its title within a given content type.
    */
@@ -180,7 +202,7 @@ export class ContentfulService {
 
     // Search through entries for a title field match (case-insensitive)
     const match = entries.items.find((entry: any) => {
-      const titleField = entry.fields['title'] || entry.fields['name'] || entry.fields['headline'];
+      const titleField = entry.fields['title'] || entry.fields['name'] || entry.fields['headline'] || entry.fields['internalName'];
       if (!titleField) return false;
       
       // Check across all locales
