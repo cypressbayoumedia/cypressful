@@ -40,7 +40,18 @@
       } @else {
         <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
           @for (asset of assets(); track asset.sys.id) {
-            <button (click)="assetSelected.emit(asset)" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-400 hover:shadow-emerald-500/20 transition-all text-left group">
+            <button (click)="toggleSelection(asset)" 
+                    [class.ring-2]="isSelected(asset)" 
+                    [class.ring-emerald-400]="isSelected(asset)"
+                    class="relative bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg hover:border-emerald-400 hover:shadow-emerald-500/20 transition-all text-left group">
+              
+              @if (isSelected(asset)) {
+                <div class="absolute top-2 right-2 z-10 bg-emerald-500 rounded-full p-0.5 text-white shadow-md">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              }
               <div class="w-full h-20 bg-slate-700 flex items-center justify-center overflow-hidden">
                 @if (isImageAsset(asset) && getAssetUrl(asset)) {
                   <img [src]="getAssetUrl(asset)! + '?w=150&h=120&fit=thumb'" [alt]="asset.fields?.title?.['en-US'] || 'Asset'" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
@@ -58,5 +69,17 @@
         </div>
       }
     </div>
+
+    <!-- Sticky Footer for Confirmation -->
+    @if (selectedAssets().length > 0) {
+      <div class="p-4 border-t border-slate-700 bg-slate-900/95 flex justify-end animate-fade-in-up">
+        <button (click)="confirmSelection()" class="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/20 transition-colors flex items-center gap-2">
+          <span>Insert Selected ({{ selectedAssets().length }})</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    }
   </div>
 }

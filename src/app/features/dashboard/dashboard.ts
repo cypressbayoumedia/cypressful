@@ -80,6 +80,7 @@ export class Dashboard {
   public stagedImage = signal<File | null>(null);
   public stagedImageBase64 = signal<string | null>(null);
   public isLoading = signal(false);
+  public isDragging = signal(false);
 
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -103,6 +104,29 @@ export class Dashboard {
     else if (this.showMediaPanel()) { this.showMediaPanel.set(false); }
     else if (this.showModelsPanel()) { this.showModelsPanel.set(false); }
     else if (this.showSpaceMenu()) { this.showSpaceMenu.set(false); }
+  }
+
+  @HostListener('dragover', ['$event'])
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging.set(true);
+  }
+
+  @HostListener('dragleave', ['$event'])
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging.set(false);
+  }
+
+  @HostListener('drop', ['$event'])
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging.set(false);
+    
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      const file = event.dataTransfer.files[0];
+      this.onFileSelected(file);
+    }
   }
 
   // --- Header actions ---
@@ -369,9 +393,9 @@ export class Dashboard {
     this.contentfulService.fetchAssets();
   }
 
-  selectAssetForField(asset: any) {
+  selectAssetsForField(assets: any[]) {
     const target = this.assetPickerTarget();
-    if (!target) return;
+    if (!target || assets.length === 0) return;
     
     const msg = this.messages().find(m => m.id === target.msgId);
     if (!msg || !msg.cardData || !msg.cardContentType) return;
@@ -381,16 +405,18 @@ export class Dashboard {
     
     if (isArray) {
       const currentArray = msg.cardData.fields[target.fieldId]?.['en-US'] || [];
+      const newLinks = assets.map((asset: any) => ({ sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }));
       this.updateCardField({
         msgId: target.msgId,
         fieldId: target.fieldId,
-        value: [...currentArray, { sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }]
+        value: [...currentArray, ...newLinks]
       });
     } else {
+      // Single link field: take the first selected asset
       this.updateCardField({
         msgId: target.msgId,
         fieldId: target.fieldId,
-        value: { sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }
+        value: { sys: { type: 'Link', linkType: 'Asset', id: assets[0].sys.id } }
       });
     }
     
@@ -517,6 +543,15 @@ export class Dashboard {
 
       if (assetIdMsg && history.length > 0) {
         history[history.length - 1].parts[0].text += assetIdMsg;
+      }
+
+      const activeEntryMsg = [...this.messages()].reverse().find(m => m.type === 'entry-card' && m.cardData && !m.cardData._deleted);
+      if (activeEntryMsg && history.length > 0) {
+        const title = activeEntryMsg.cardData.fields?.title?.['en-US'] || 'Untitled';
+        const entryId = activeEntryMsg.cardData.sys.id || 'New Draft';
+        const contentTypeName = activeEntryMsg.cardContentType?.name || 'Unknown';
+        
+        history[history.length - 1].parts[0].text += `\\n[System Context: The user is currently viewing/editing the entry titled "${title}" (ID: ${entryId}, Content Type: ${contentTypeName}). Any actions or questions about "this entry" or "the current entry" should apply to this specific entry context.]`;
       }
 
       const response = await this.geminiService.processCommand(history, schema);
