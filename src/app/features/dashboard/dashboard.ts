@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild, ElementRef, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, signal, ViewChild, ElementRef, effect, computed } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../core/services/auth.service';
 import { VoiceService } from '../../core/services/voice.service';
@@ -11,10 +11,12 @@ import { MediaLibraryPanel } from './components/media-library-panel/media-librar
 import { EntriesPanel } from './components/entries-panel/entries-panel';
 import { EntryCard } from './components/entry-card/entry-card';
 import { AssetPicker } from './components/asset-picker/asset-picker';
-import { ChatInput } from './components/chat-input/chat-input';
+import { EntryPicker } from './components/entry-picker/entry-picker';
+
 import { PowerToolsPanel } from './components/power-tools-panel/power-tools-panel';
 import { ImageToolsService } from '../../core/services/image-tools.service';
 import { ToastService } from '../../core/services/toast.service';
+import { EntryAssistant } from './components/entry-assistant/entry-assistant';
 
 @Component({
   selector: 'app-dashboard',
@@ -25,7 +27,8 @@ import { ToastService } from '../../core/services/toast.service';
     EntriesPanel,
     EntryCard,
     AssetPicker,
-    ChatInput,
+    EntryPicker,
+    EntryAssistant,
     PowerToolsPanel,
   ],
   templateUrl: './dashboard.html',
@@ -34,9 +37,7 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class Dashboard {
   private authService = inject(AuthService);
-  private voiceService = inject(VoiceService);
   public contentfulService = inject(ContentfulService);
-  private geminiService = inject(GeminiService);
   private imageTools = inject(ImageToolsService);
   private toast = inject(ToastService);
 
@@ -50,51 +51,32 @@ export class Dashboard {
   public showMediaPanel = signal(false);
   public showEntriesPanel = signal(false);
   public showAssetPicker = signal(false);
+  public showEntryPicker = signal(false);
   public showPowerTools = signal(false);
+  public showAssistant = signal(false);
   public assetPickerTarget = signal<{ msgId: string; fieldId: string } | null>(null);
+  public entryPickerTarget = signal<{ msgId: string; fieldId: string; isArray: boolean, allowedContentTypes: string[] } | null>(null);
 
-  // Voice state
-  public isListening = this.voiceService.isListening;
-  public messageInput = signal('');
+  // Active Entry state (currently edited entry in main view)
+  public activeEntry = signal<{ data: any; contentType: any; _deleted?: boolean } | null>(null);
 
-  // Chat state
-  public messages = signal<ChatMessage[]>(this.loadSession());
+  // Computes a mock message object to bridge compatibility with the existing EntryCard component
+  public activeEntryMessage = computed<ChatMessage | null>(() => {
+    const entry = this.activeEntry();
+    if (!entry) return null;
+    return {
+      id: 'active',
+      role: 'user',
+      type: 'entry-card',
+      content: '',
+      timestamp: new Date(),
+      cardData: entry.data,
+      cardContentType: entry.contentType
+    };
+  });
 
-  private loadSession(): ChatMessage[] {
-    const saved = localStorage.getItem('cypressful_session');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.warn('Failed to parse saved session', e);
-      }
-    }
-    return [{
-      id: '1',
-      role: 'assistant',
-      content: 'Hello James. I am ready to update Contentful. What would you like to do?',
-      timestamp: new Date()
-    }];
-  }
-
-  public stagedImage = signal<File | null>(null);
-  public stagedImageBase64 = signal<string | null>(null);
   public isLoading = signal(false);
   public isDragging = signal(false);
-
-  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
-
-  constructor() {
-    toObservable(this.voiceService.transcript).subscribe((transcript: string) => {
-      if (transcript) {
-        this.messageInput.set(transcript);
-      }
-    });
-
-    effect(() => {
-      localStorage.setItem('cypressful_session', JSON.stringify(this.messages()));
-    });
-  }
 
   @HostListener('document:keydown.escape')
   onEscapeKey() {
@@ -123,10 +105,7 @@ export class Dashboard {
     event.preventDefault();
     this.isDragging.set(false);
     
-    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-      const file = event.dataTransfer.files[0];
-      this.onFileSelected(file);
-    }
+    // We can do something here if we want to handle drag and drop at the dashboard level without the chat open
   }
 
   // --- Header actions ---
@@ -140,14 +119,7 @@ export class Dashboard {
   }
 
   clearSession() {
-    localStorage.removeItem('cypressful_session');
-    this.messages.set([{
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: 'Session cleared. What would you like to do?',
-      timestamp: new Date()
-    }]);
-    this.toast.success('Chat session cleared.');
+    // This is now inside the Entry Assistant component, but we keep this stub in case the header needs to call something here.
   }
 
   openMediaPanel() {
@@ -215,25 +187,25 @@ export class Dashboard {
     }
   }
 
+  async uploadNewMedia(file: File) {
+    try {
+      await this.contentfulService.uploadAsset(file);
+      this.toast.success('Media uploaded successfully.');
+    } catch (err: any) {
+      this.toast.error('Failed to upload media: ' + this.parseContentfulError(err));
+    }
+  }
+
   // --- Entries panel actions ---
   async loadEntryForEdit(entry: any) {
     this.showEntriesPanel.set(false);
     const ctId = entry.sys.contentType.sys.id;
     const ct = this.contentfulService.contentTypes().find((c: any) => c.sys.id === ctId);
 
-    this.messages.update(msgs => [
-      ...msgs,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        type: 'entry-card',
-        content: `Edit ${entry.fields.title?.['en-US'] || entry.sys.id}`,
-        timestamp: new Date(),
-        cardData: JSON.parse(JSON.stringify(entry)),
-        cardContentType: ct
-      } as ChatMessage
-    ]);
-    setTimeout(() => this.scrollToBottom(), 100);
+    this.activeEntry.set({
+      data: JSON.parse(JSON.stringify(entry)),
+      contentType: ct
+    });
   }
 
   async unpublishEntryFromPanel(entry: any) {
@@ -258,41 +230,35 @@ export class Dashboard {
   }
 
   // --- Entry card actions ---
-  updateCardField(event: { msgId: string; fieldId: string; value: any }) {
-    this.messages.update(msgs => msgs.map(m => {
-      if (m.id === event.msgId && m.cardData) {
-        const newData = { ...m.cardData };
-        if (!newData.fields) newData.fields = {};
-        if (!newData.fields[event.fieldId]) newData.fields[event.fieldId] = {};
-        newData.fields[event.fieldId]['en-US'] = event.value;
-        return { ...m, cardData: newData };
-      }
-      return m;
-    }));
+  updateActiveCardField(event: { fieldId: string; value: any }) {
+    this.activeEntry.update(entry => {
+      if (!entry) return null;
+      const newData = { ...entry.data };
+      if (!newData.fields) newData.fields = {};
+      if (!newData.fields[event.fieldId]) newData.fields[event.fieldId] = {};
+      newData.fields[event.fieldId]['en-US'] = event.value;
+      return { ...entry, data: newData };
+    });
   }
 
-  async saveEntryCard(msgId: string) {
-    const msg = this.messages().find(m => m.id === msgId);
-    if (!msg || !msg.cardData) return;
+  async saveActiveEntry() {
+    const entry = this.activeEntry();
+    if (!entry || !entry.data) return;
 
     this.isLoading.set(true);
     try {
-      const isCreate = !msg.cardData.sys.id;
+      const isCreate = !entry.data.sys.id;
       const intent = isCreate ? 'create' : 'update';
       const action: any = {
         intent,
-        contentTypeId: msg.cardContentType?.sys?.id,
-        fields: msg.cardData.fields
+        contentTypeId: entry.contentType?.sys?.id,
+        fields: entry.data.fields
       };
-      if (!isCreate) action.entryId = msg.cardData.sys.id;
+      if (!isCreate) action.entryId = entry.data.sys.id;
 
       const resultEntry = await this.contentfulService.executeAction(action);
 
-      this.messages.update(msgs => msgs.map(m => m.id === msgId ? {
-        ...m,
-        cardData: resultEntry,
-        content: isCreate ? `Created ${msg.cardContentType?.name}` : `Updated ${msg.cardContentType?.name}`
-      } as ChatMessage : m));
+      this.activeEntry.update(e => e ? { ...e, data: resultEntry } : null);
 
       this.toast.success('Saved successfully to Contentful.');
     } catch (err: any) {
@@ -300,141 +266,207 @@ export class Dashboard {
       this.toast.error(`Save failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
-      setTimeout(() => this.scrollToBottom(), 100);
     }
   }
 
-  async publishEntryCard(msgId: string) {
-    const msg = this.messages().find(m => m.id === msgId);
-    if (!msg || !msg.cardData?.sys?.id) return;
+  async publishActiveEntry() {
+    const entry = this.activeEntry();
+    if (!entry || !entry.data?.sys?.id) return;
     this.isLoading.set(true);
     try {
-      const published = await this.contentfulService.publishEntry(msg.cardData.sys.id);
-      this.messages.update(msgs => msgs.map(m => m.id === msgId ? { ...m, cardData: published } : m));
+      const published = await this.contentfulService.publishEntry(entry.data.sys.id);
+      this.activeEntry.update(e => e ? { ...e, data: published } : null);
       this.toast.success('Entry published live!');
     } catch (err: any) {
       console.error(err);
       this.toast.error(`Publish failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
-      setTimeout(() => this.scrollToBottom(), 100);
     }
   }
 
-  async unpublishEntryCard(msgId: string) {
-    const msg = this.messages().find(m => m.id === msgId);
-    if (!msg || !msg.cardData?.sys?.id) return;
+  async unpublishActiveEntry() {
+    const entry = this.activeEntry();
+    if (!entry || !entry.data?.sys?.id) return;
     this.isLoading.set(true);
     try {
-      const unpublished = await this.contentfulService.unpublishEntry(msg.cardData.sys.id);
-      this.messages.update(msgs => msgs.map(m => m.id === msgId ? { ...m, cardData: unpublished } : m));
+      const unpublished = await this.contentfulService.unpublishEntry(entry.data.sys.id);
+      this.activeEntry.update(e => e ? { ...e, data: unpublished } : null);
       this.toast.success('Entry unpublished — reverted to draft.');
     } catch (err: any) {
       console.error(err);
       this.toast.error(`Unpublish failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
-      setTimeout(() => this.scrollToBottom(), 100);
     }
   }
 
-  async deleteEntryCard(msgId: string) {
-    const msg = this.messages().find(m => m.id === msgId);
-    if (!msg || !msg.cardData?.sys?.id) return;
+  async deleteActiveEntry() {
+    const entry = this.activeEntry();
+    if (!entry || !entry.data?.sys?.id) return;
     if (!confirm('Are you sure you want to permanently delete this entry?')) return;
     this.isLoading.set(true);
     try {
-      await this.contentfulService.deleteEntry(msg.cardData.sys.id);
-      this.messages.update(msgs => msgs.map(m => m.id === msgId ? {
-        ...m,
-        cardData: { ...m.cardData, _deleted: true },
-        content: `Deleted ${msg.cardContentType?.name || 'entry'}`
-      } : m));
+      await this.contentfulService.deleteEntry(entry.data.sys.id);
+      this.activeEntry.set(null); // Clear the view
       this.toast.success('Entry permanently deleted.');
     } catch (err: any) {
       console.error(err);
       this.toast.error(`Delete failed: ${this.parseContentfulError(err)}`);
     } finally {
       this.isLoading.set(false);
-      setTimeout(() => this.scrollToBottom(), 100);
     }
   }
 
-  duplicateEntryCard(msgId: string) {
-    const msg = this.messages().find(m => m.id === msgId);
-    if (!msg || !msg.cardData || !msg.cardContentType) return;
+  duplicateActiveEntry() {
+    const entry = this.activeEntry();
+    if (!entry || !entry.data || !entry.contentType) return;
     
-    const clonedFields = JSON.parse(JSON.stringify(msg.cardData.fields || {}));
+    const clonedFields = JSON.parse(JSON.stringify(entry.data.fields || {}));
     const blankEntry = {
-      sys: { id: null, type: 'Entry', contentType: { sys: { id: msg.cardContentType.sys.id } } },
+      sys: { id: null, type: 'Entry', contentType: { sys: { id: entry.contentType.sys.id } } },
       fields: clonedFields
     };
 
-    this.messages.update(msgs => [
-      ...msgs,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        type: 'entry-card',
-        content: `Duplicate of ${msg.cardContentType?.name || 'entry'}`,
-        timestamp: new Date(),
-        cardData: blankEntry,
-        cardContentType: msg.cardContentType
-      } as ChatMessage
-    ]);
+    this.activeEntry.set({
+      data: blankEntry,
+      contentType: entry.contentType
+    });
+    
     this.toast.info('Entry duplicated — edit and save as a new entry.');
-    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   // --- Asset picker actions ---
-  openAssetPickerForField(event: { msgId: string; fieldId: string }) {
+  openAssetPickerForField(event: { msgId: string, fieldId: string }) {
     this.assetPickerTarget.set(event);
     this.showAssetPicker.set(true);
-    this.contentfulService.fetchAssets();
+  }
+
+  openEntryPickerForField(event: { msgId: string, fieldId: string, isArray: boolean, allowedContentTypes: string[] }) {
+    this.entryPickerTarget.set(event);
+    this.showEntryPicker.set(true);
   }
 
   selectAssetsForField(assets: any[]) {
     const target = this.assetPickerTarget();
-    if (!target || assets.length === 0) return;
-    
-    const msg = this.messages().find(m => m.id === target.msgId);
-    if (!msg || !msg.cardData || !msg.cardContentType) return;
+    if (!target || !this.activeEntry()) return;
 
-    const fieldDef = msg.cardContentType.fields?.find((f: any) => f.id === target.fieldId);
-    const isArray = fieldDef?.type === 'Array';
-    
-    if (isArray) {
-      const currentArray = msg.cardData.fields[target.fieldId]?.['en-US'] || [];
-      const newLinks = assets.map((asset: any) => ({ sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id } }));
-      this.updateCardField({
-        msgId: target.msgId,
-        fieldId: target.fieldId,
-        value: [...currentArray, ...newLinks]
-      });
-    } else {
-      // Single link field: take the first selected asset
-      this.updateCardField({
-        msgId: target.msgId,
-        fieldId: target.fieldId,
-        value: { sys: { type: 'Link', linkType: 'Asset', id: assets[0].sys.id } }
-      });
-    }
-    
     this.showAssetPicker.set(false);
     this.assetPickerTarget.set(null);
-  }
 
-  clearAssetField(event: { msgId: string; fieldId: string }) {
-    this.updateCardField({ msgId: event.msgId, fieldId: event.fieldId, value: null });
-  }
+    const data = { ...this.activeEntry()!.data };
+    const fieldId = target.fieldId;
+    const currentFieldData = data.fields[fieldId] || {};
 
-  // --- Chat input actions ---
-  toggleVoice() {
-    if (this.isListening()) {
-      this.voiceService.stopListening();
+    const contentType = this.activeEntry()!.contentType;
+    const fieldDef = contentType.fields.find((f: any) => f.id === fieldId);
+
+    if (fieldDef?.type === 'Array') {
+      const currentValues = currentFieldData['en-US'] || [];
+      const newLinks = assets.map(asset => ({
+        sys: { type: 'Link', linkType: 'Asset', id: asset.sys.id }
+      }));
+      data.fields[fieldId] = { 'en-US': [...currentValues, ...newLinks] };
     } else {
-      this.voiceService.startListening();
+      const selected = assets[0]; // just take first for single link
+      data.fields[fieldId] = {
+        'en-US': {
+          sys: { type: 'Link', linkType: 'Asset', id: selected.sys.id }
+        }
+      };
     }
+
+    this.activeEntry.set({ data, contentType });
+  }
+
+  selectEntriesForField(entries: any[]) {
+    const target = this.entryPickerTarget();
+    if (!target || !this.activeEntry()) return;
+
+    this.showEntryPicker.set(false);
+    this.entryPickerTarget.set(null);
+
+    const data = { ...this.activeEntry()!.data };
+    const fieldId = target.fieldId;
+    const currentFieldData = data.fields[fieldId] || {};
+
+    if (target.isArray) {
+      const currentValues = currentFieldData['en-US'] || [];
+      const newLinks = entries.map(entry => ({
+        sys: { type: 'Link', linkType: 'Entry', id: entry.sys.id }
+      }));
+      data.fields[fieldId] = { 'en-US': [...currentValues, ...newLinks] };
+    } else {
+      const selected = entries[0];
+      data.fields[fieldId] = {
+        'en-US': {
+          sys: { type: 'Link', linkType: 'Entry', id: selected.sys.id }
+        }
+      };
+    }
+
+    this.activeEntry.set({ data, contentType: this.activeEntry()!.contentType });
+  }
+
+  async createNewEntryFromPicker(contentTypeId: string) {
+    const target = this.entryPickerTarget();
+    if (!target || !this.activeEntry()) return;
+
+    this.showEntryPicker.set(false);
+    this.entryPickerTarget.set(null);
+    this.toast.info('Creating new entry...');
+
+    try {
+      const resultEntry = await this.contentfulService.executeAction({
+        intent: 'create',
+        contentTypeId,
+        fields: {}
+      });
+
+      const data = { ...this.activeEntry()!.data };
+      const fieldId = target.fieldId;
+      const currentFieldData = data.fields[fieldId] || {};
+
+      if (target.isArray) {
+        const currentValues = currentFieldData['en-US'] || [];
+        const newLink = { sys: { type: 'Link', linkType: 'Entry', id: resultEntry.sys.id } };
+        data.fields[fieldId] = { 'en-US': [...currentValues, newLink] };
+      } else {
+        data.fields[fieldId] = {
+          'en-US': { sys: { type: 'Link', linkType: 'Entry', id: resultEntry.sys.id } }
+        };
+      }
+
+      this.activeEntry.set({ data, contentType: this.activeEntry()!.contentType });
+      this.toast.success('Successfully created and linked new blank entry!');
+      this.contentfulService.fetchEntries();
+    } catch (err: any) {
+      this.toast.error('Creation failed: ' + this.parseContentfulError(err));
+    }
+  }
+
+  editLinkedEntry(entryId: string) {
+    const entry = this.contentfulService.entries().find(e => e.sys.id === entryId);
+    if (!entry) {
+      this.toast.error('Could not find entry data.');
+      return;
+    }
+    const contentType = this.contentfulService.contentTypes().find(c => c.sys.id === entry.sys.contentType.sys.id);
+    if (!contentType) {
+      this.toast.error('Could not find content type for entry.');
+      return;
+    }
+    
+    if (confirm('Navigating to this entry will replace your current view. Unsaved changes to the current entry will be lost. Do you want to proceed?')) {
+      this.activeEntry.set({
+        data: JSON.parse(JSON.stringify(entry)),
+        contentType: JSON.parse(JSON.stringify(contentType))
+      });
+    }
+  }
+
+  clearAssetField(event: { fieldId: string }) {
+    this.updateActiveCardField({ fieldId: event.fieldId, value: null });
   }
 
   onSelectTemplate(contentType: any) {
@@ -443,162 +475,18 @@ export class Dashboard {
       fields: {}
     };
 
-    this.messages.update(msgs => [
-      ...msgs,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        type: 'entry-card',
-        content: `Create new ${contentType.name}`,
-        timestamp: new Date(),
-        cardData: blankEntry,
-        cardContentType: contentType
-      } as ChatMessage
-    ]);
-    setTimeout(() => this.scrollToBottom(), 100);
+    this.activeEntry.set({
+      data: blankEntry,
+      contentType: contentType
+    });
   }
 
-  async onFileSelected(file: File) {
-    // Auto-convert HEIC/HEIF and other incompatible formats
-    if (this.imageTools.isConvertible(file)) {
-      this.toast.info(`Converting ${file.name} to JPEG...`);
-      try {
-        const converted = await this.imageTools.autoConvert(file);
-        this.stagedImage.set(converted);
-        const base64 = await this.imageTools.blobToDataUrl(converted);
-        this.stagedImageBase64.set(base64);
-        this.toast.success(`Converted to ${converted.name}`);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Conversion failed';
-        this.toast.warning(`Conversion failed: ${message}. Staging original file.`);
-        this.stagedImage.set(file);
-        const reader = new FileReader();
-        reader.onload = () => this.stagedImageBase64.set(reader.result as string);
-        reader.readAsDataURL(file);
-      }
-    } else {
-      this.stagedImage.set(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.stagedImageBase64.set(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  async sendMessage(text: string) {
-    if (!text.trim() && !this.stagedImage()) return;
-
-    if (this.isListening()) {
-      this.voiceService.stopListening();
-    }
-
-    const currentImage = this.stagedImage();
-    const currentBase64 = this.stagedImageBase64();
-
-    this.messageInput.set('');
-    this.voiceService.transcript.set('');
-    this.stagedImage.set(null);
-    this.stagedImageBase64.set(null);
-
-    this.messages.update(msgs => [
-      ...msgs,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        content: text || 'Uploaded an image',
-        timestamp: new Date(),
-        ...(currentBase64 ? { inlineData: { data: currentBase64, mimeType: currentImage?.type } } : {})
-      } as ChatMessage
-    ]);
-
-    this.isLoading.set(true);
-
-    try {
-      const thinkingId = Date.now().toString() + '_thinking';
-      this.messages.update(msgs => [
-        ...msgs,
-        { id: thinkingId, role: 'system', content: 'Consulting Gemini schema parser...', timestamp: new Date() }
-      ]);
-
-      let assetIdMsg = '';
-      if (currentImage) {
-        this.messages.update(msgs => msgs.map(m => m.id === thinkingId ? { ...m, content: 'Uploading image to Contentful...' } : m));
-        const asset = await this.contentfulService.uploadAsset(currentImage);
-        assetIdMsg = `\\n[Context: Image uploaded as Asset ID: ${asset.sys.id}]`;
-        this.messages.update(msgs => msgs.map(m => m.id === thinkingId ? { ...m, content: 'Asset created! Consulting Gemini...' } : m));
-      }
-
-      const schema = this.contentfulService.contentTypes();
-      const history = this.messages()
-        .filter(m => m.role === 'user' || m.role === 'assistant')
-        .map(m => {
-          const parts: any[] = [{ text: m.content }];
-          if ((m as any).inlineData) {
-            const base64Data = (m as any).inlineData.data.split(',')[1];
-            parts.push({ inlineData: { data: base64Data, mimeType: (m as any).inlineData.mimeType } });
-          }
-          return { role: m.role === 'assistant' ? 'model' : 'user', parts };
-        });
-
-      if (assetIdMsg && history.length > 0) {
-        history[history.length - 1].parts[0].text += assetIdMsg;
-      }
-
-      const activeEntryMsg = [...this.messages()].reverse().find(m => m.type === 'entry-card' && m.cardData && !m.cardData._deleted);
-      if (activeEntryMsg && history.length > 0) {
-        const title = activeEntryMsg.cardData.fields?.title?.['en-US'] || 'Untitled';
-        const entryId = activeEntryMsg.cardData.sys.id || 'New Draft';
-        const contentTypeName = activeEntryMsg.cardContentType?.name || 'Unknown';
-        
-        history[history.length - 1].parts[0].text += `\\n[System Context: The user is currently viewing/editing the entry titled "${title}" (ID: ${entryId}, Content Type: ${contentTypeName}). Any actions or questions about "this entry" or "the current entry" should apply to this specific entry context.]`;
-      }
-
-      const response = await this.geminiService.processCommand(history, schema);
-
-      let actionResultMsg = '';
-      let entryIdStr = '';
-      if (response.intent) {
-        try {
-          const entry = await this.contentfulService.executeAction(response);
-          actionResultMsg = '\\n\\n✅ Action successfully executed.';
-          if (response.intent === 'create' && entry?.sys?.id) {
-            entryIdStr = `\\nEntry ID: ${entry.sys.id}`;
-          }
-        } catch (actionErr: any) {
-          console.error('Action Execution Error:', actionErr);
-          actionResultMsg = `\\n\\n❌ Failed to execute action: ${actionErr.message}`;
-        }
-      }
-
-      this.messages.update(msgs => [
-        ...msgs.filter(m => m.id !== thinkingId),
-        {
-          id: Date.now().toString() + '_response',
-          role: 'assistant',
-          content: (response.explanation || 'Action processed.') + actionResultMsg + entryIdStr,
-          timestamp: new Date()
-        }
-      ]);
-
-      console.log('Gemini Parsed Action:', response);
-    } catch (error) {
-      console.error('Error invoking Gemini:', error);
-      this.messages.update(msgs => [
-        ...msgs,
-        { id: Date.now().toString() + '_error', role: 'system', content: 'Error: Could not reach the Gemini API.', timestamp: new Date() }
-      ]);
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  // --- Helpers ---
-  private addSystemMessage(content: string) {
-    this.messages.update(msgs => [
-      ...msgs,
-      { id: Date.now().toString() + '_sys', role: 'assistant', content, timestamp: new Date() }
-    ]);
+  onAssistantOpenEntry(event: { entry: any, contentType: any }) {
+    this.activeEntry.set({
+      data: event.entry,
+      contentType: event.contentType
+    });
+    this.showEntriesPanel.set(false);
   }
 
   private parseContentfulError(err: any): string {
@@ -610,17 +498,5 @@ export class Dashboard {
       }).join('; ');
     }
     return err?.message || 'Unknown error';
-  }
-
-  ngAfterViewChecked() {
-    this.scrollToBottom();
-  }
-
-  private scrollToBottom(): void {
-    try {
-      if (this.scrollContainer) {
-        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-      }
-    } catch (err) { }
   }
 }

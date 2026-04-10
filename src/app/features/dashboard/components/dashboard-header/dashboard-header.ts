@@ -21,7 +21,6 @@ export class DashboardHeader {
   public openMedia = output<void>();
   public toggleModels = output<void>();
   public openPowerTools = output<void>();
-  public clearSession = output<void>();
   public logoutClicked = output<void>();
 
   public configService = inject(ConfigService);

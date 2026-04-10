@@ -12,6 +12,7 @@ export class EntryCard {
   public message = input.required<ChatMessage>();
   public isLoading = input(false);
   public assets = input<any[]>([]);
+  public entries = input<any[]>([]);
 
   public save = output<string>();
   public publish = output<string>();
@@ -20,7 +21,24 @@ export class EntryCard {
   public updateField = output<{ msgId: string; fieldId: string; value: any }>();
   public openAssetPicker = output<{ msgId: string; fieldId: string }>();
   public clearAsset = output<{ msgId: string; fieldId: string }>();
+  public openEntryPicker = output<{ msgId: string; fieldId: string; isArray: boolean; allowedContentTypes: string[] }>();
+  public editEntryLink = output<string>();
   public duplicate = output<string>();
+  public closeCard = output<void>();
+
+  getAllowedContentTypes(field: any): string[] {
+    let validations = field.validations || [];
+    if (field.type === 'Array' && field.items?.validations) {
+      validations = field.items.validations;
+    }
+    
+    for (const v of validations) {
+      if (v.linkContentType) {
+        return v.linkContentType;
+      }
+    }
+    return [];
+  }
 
   async copyEntryId() {
     const id = this.message()?.cardData?.sys?.id;
@@ -147,8 +165,20 @@ export class EntryCard {
 
   getLinkedEntryTitle(linkValue: any): string {
     if (!linkValue?.sys?.id) return 'Unknown';
-    // For entries, we don't have them loaded in the card — just show the ID
-    return linkValue.sys.id;
+    const id = linkValue.sys.id;
+    const resolvedEntry = this.entries().find((e: any) => e.sys.id === id);
+    if (!resolvedEntry) return id; // Fallback to ID if not loaded
+    // Search fields for common title properties
+    const titleField = resolvedEntry.fields['title'] || resolvedEntry.fields['name'] || resolvedEntry.fields['headline'] || resolvedEntry.fields['internalName'];
+    if (titleField) {
+      // Find first available locale
+      for (const locale of Object.keys(titleField)) {
+        if (typeof titleField[locale] === 'string') {
+          return titleField[locale];
+        }
+      }
+    }
+    return id;
   }
 
   isAssetLink(item: any): boolean {
@@ -207,5 +237,9 @@ export class EntryCard {
 
   clearSingleEntryLink(fieldId: string) {
     this.onFieldUpdate(fieldId, null);
+  }
+
+  onEditLinkedEntry(entryId: string) {
+    this.editEntryLink.emit(entryId);
   }
 }

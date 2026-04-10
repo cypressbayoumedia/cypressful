@@ -257,6 +257,7 @@ export class ContentfulService {
     const publishedAsset = await processedAsset.publish();
     
     console.log('Asset published successfully:', publishedAsset);
+    this.assets.update(items => [publishedAsset, ...items]);
     return publishedAsset;
   }
 

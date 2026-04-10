@@ -13,6 +13,7 @@ export class MediaLibraryPanel {
   public closed = output<void>();
   public deleteAsset = output<string>();
   public renameAsset = output<{ assetId: string; newTitle: string }>();
+  public uploadAsset = output<File>();
 
   public selectedAsset = signal<any | null>(null);
   public isEditing = signal(false);
@@ -56,6 +57,15 @@ export class MediaLibraryPanel {
     if (!confirm('Delete this asset permanently?')) return;
     this.deleteAsset.emit(assetId);
     this.selectedAsset.set(null);
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.uploadAsset.emit(file);
+    }
+    // reset input
+    event.target.value = '';
   }
 
   onClose() {

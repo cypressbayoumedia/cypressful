@@ -15,6 +15,11 @@
           {{ getEntryStatus(message().cardData) }}
         </span>
     }
+    <button (click)="closeCard.emit()" class="text-slate-400 hover:text-white p-1 rounded-md transition-colors hover:bg-red-500/20 hover:text-red-400 ml-2 shadow-sm" [class.ml-auto]="!message().cardData.sys.id" title="Close Entry">
+      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
 
   @for (field of message().cardContentType.fields; track field.id) {
@@ -128,14 +133,19 @@
                       <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zM10 8a.75.75 0 01.75.75v1.5h1.5a.75.75 0 010 1.5h-1.5v1.5a.75.75 0 01-1.5 0v-1.5h-1.5a.75.75 0 010-1.5h1.5v-1.5A.75.75 0 0110 8z" clip-rule="evenodd" />
                     </svg>
                   </div>
-                  <span class="text-[10px] text-white truncate flex-1 font-mono">{{ item.sys.id }}</span>
-                  <span class="text-[8px] text-blue-400/50 font-mono">Entry</span>
+                  <span class="text-[10px] text-white truncate flex-1">{{ getLinkedEntryTitle(item) }}</span>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button (click)="onEditLinkedEntry(item.sys.id)" class="px-2 py-1 bg-blue-500/10 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 rounded text-[10px] font-medium transition-colors">
+                      Edit
+                    </button>
+                    <span class="text-[8px] text-blue-400/50 font-mono hidden sm:inline">Entry</span>
+                  </div>
                 } @else {
                   <!-- Plain value (string, number, etc) -->
                   <span class="text-[10px] text-white truncate flex-1">{{ item }}</span>
                 }
-                <!-- Remove button -->
-                <button (click)="removeArrayItem(field.id, $index)" class="p-1 text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-300 transition-opacity" title="Remove item">
+                <!-- Remove button (Always visible) -->
+                <button (click)="removeArrayItem(field.id, $index)" class="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/30 hover:text-red-300 rounded transition-colors" title="Remove item">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
                 </button>
               </div>
@@ -153,8 +163,10 @@
                 Add Asset
               </button>
             } @else if (field.items?.linkType === 'Entry') {
-              <input #newEntryInput type="text" placeholder="Entry ID..." class="flex-1 bg-slate-900 border border-emerald-500/30 rounded px-2 py-1 text-[10px] text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none" (keyup.enter)="addEntryLinkToArray(field.id, newEntryInput)">
-              <button (click)="addEntryLinkToArray(field.id, newEntryInput)" class="px-2 py-1 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] rounded transition-colors">Add</button>
+              <button (click)="openEntryPicker.emit({ msgId: message().id, fieldId: field.id, isArray: true, allowedContentTypes: getAllowedContentTypes(field) })" class="w-full py-1.5 text-[10px] font-medium text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors flex items-center justify-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+                Choose Entry
+              </button>
             } @else {
               <input #newStringInput type="text" placeholder="Value..." class="flex-1 bg-slate-900 border border-emerald-500/30 rounded px-2 py-1 text-[10px] text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none" (keyup.enter)="addStringToArray(field.id, newStringInput)">
               <button (click)="addStringToArray(field.id, newStringInput)" class="px-2 py-1 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] rounded transition-colors">Add</button>
@@ -163,17 +175,33 @@
         </div>
       } @else if (field.type === 'Link') {
         <!-- Non-asset Link (entry reference) -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 w-full">
           @if (message().cardData.fields[field.id]?.['en-US']?.sys?.id) {
-            <div class="flex-1 bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 flex items-center justify-between">
-              <span class="font-mono text-[10px] text-emerald-300">{{ message().cardData.fields[field.id]?.['en-US']?.sys?.id }}</span>
-              <button (click)="clearSingleEntryLink(field.id)" class="text-red-400 hover:text-red-300 p-0.5" title="Remove Link">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
-              </button>
+            <div class="flex-1 bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 flex items-center justify-between gap-2 overflow-hidden w-full">
+              <div class="flex flex-col min-w-0">
+                <span class="text-[10px] text-white truncate">{{ getLinkedEntryTitle(message().cardData.fields[field.id]?.['en-US']) }}</span>
+                <span class="text-emerald-400/50 font-mono text-[8px] truncate">{{ message().cardData.fields[field.id]?.['en-US']?.sys?.id }}</span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button (click)="onEditLinkedEntry(message().cardData.fields[field.id]?.['en-US']?.sys?.id)" class="p-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 rounded transition-colors" title="Edit Linked Entry">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" /></svg>
+                </button>
+                <button (click)="openEntryPicker.emit({ msgId: message().id, fieldId: field.id, isArray: false, allowedContentTypes: getAllowedContentTypes(field) })" class="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300 rounded transition-colors" title="Change Link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.598a.75.75 0 00-.75.75v3.634a.75.75 0 001.5 0v-2.033a6.997 6.997 0 0011.215-3.257.75.75 0 00-1.251-.749z" /></svg>
+                </button>
+                <button (click)="clearSingleEntryLink(field.id)" class="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/30 hover:text-red-300 rounded transition-colors" title="Remove Link">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>
+                </button>
+              </div>
             </div>
           } @else {
-            <input #singleEntryInput type="text" placeholder="Entry ID..." class="flex-1 bg-slate-900 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none" (keyup.enter)="setSingleEntryLink(field.id, singleEntryInput)">
-            <button (click)="setSingleEntryLink(field.id, singleEntryInput)" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-semibold rounded-lg transition-colors leading-none">Set</button>
+            <button (click)="openEntryPicker.emit({ msgId: message().id, fieldId: field.id, isArray: false, allowedContentTypes: getAllowedContentTypes(field) })" 
+              class="w-full bg-slate-900/30 border border-dashed border-emerald-500/30 rounded-lg px-3 py-3 text-xs text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-400/50 transition-all flex items-center justify-center gap-2 group">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform">
+                <path fill-rule="evenodd" d="M1 5.25A2.25 2.25 0 013.25 3h13.5A2.25 2.25 0 0119 5.25v9.5A2.25 2.25 0 0116.75 17H3.25A2.25 2.25 0 011 14.75v-9.5zm1.5 5.81V14.75c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75v-2.06l-2.22-2.22a.75.75 0 00-1.06 0l-1.22 1.22 1.72 1.72a.75.75 0 11-1.06 1.06l-5.34-5.34a.75.75 0 00-1.06 0L2.5 11.06zm10.28-7.56a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+              </svg>
+              Choose Entry
+            </button>
           }
         </div>
       } @else {
