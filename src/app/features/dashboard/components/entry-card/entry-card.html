@@ -47,11 +47,12 @@
           class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white placeholder-emerald-100/30 focus:border-emerald-400 outline-none">
       } @else if (field.type === 'Boolean') {
         <select
-          [value]="message().cardData.fields[field.id]?.['en-US'] ? 'true' : 'false'"
-          (change)="onFieldUpdate(field.id, $any($event.target).value === 'true' ? true : false)"
+          [value]="getBooleanValue(field.id)"
+          (change)="onBooleanChange(field.id, $any($event.target).value)"
           class="w-full bg-slate-900/50 border border-emerald-500/30 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-emerald-400">
-          <option value="false">No</option>
+          <option value="" disabled>— Select —</option>
           <option value="true">Yes</option>
+          <option value="false">No</option>
         </select>
       } @else if (field.type === 'Link' && field.linkType === 'Asset') {
         <!-- Asset Link Field -->

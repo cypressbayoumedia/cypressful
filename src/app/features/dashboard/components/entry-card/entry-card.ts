@@ -77,6 +77,23 @@ export class EntryCard {
     this.updateField.emit({ msgId: this.message().id, fieldId, value });
   }
 
+  // --- Boolean Field Helpers ---
+  getBooleanValue(fieldId: string): string {
+    const val = this.message().cardData.fields[fieldId]?.['en-US'];
+    if (val === true) return 'true';
+    if (val === false) return 'false';
+    return ''; // unset — shows the "— Select —" placeholder
+  }
+
+  onBooleanChange(fieldId: string, selectValue: string) {
+    if (selectValue === 'true') {
+      this.onFieldUpdate(fieldId, true);
+    } else if (selectValue === 'false') {
+      this.onFieldUpdate(fieldId, false);
+    }
+    // ignore empty string (placeholder re-selected, shouldn't happen with disabled)
+  }
+
   // --- Rich Text Handlers ---
   extractRichText(richTextObj: any): string {
     if (!richTextObj || !richTextObj.content) return '';
