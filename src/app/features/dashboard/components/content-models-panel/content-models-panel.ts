@@ -10,4 +10,5 @@ export class ContentModelsPanel {
   public contentTypes = input<any[]>([]);
 
   public closed = output<void>();
+  public selected = output<any>();
 }

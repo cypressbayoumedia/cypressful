@@ -21,10 +21,18 @@
     <!-- Model List -->
     <div class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-3 md:max-w-4xl md:mx-auto md:w-full">
       @for (model of contentTypes(); track model.sys.id) {
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-500/50 transition-colors">
+        <button (click)="selected.emit(model)" class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg hover:border-emerald-400 hover:shadow-emerald-500/20 transition-all cursor-pointer text-left group w-full">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-white text-sm">{{ model.name }}</h3>
-            <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{{ model.fields?.length || 0 }} fields</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{{ model.fields?.length || 0 }} fields</span>
+              <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full font-semibold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Create Entry
+              </span>
+            </div>
           </div>
           @if (model.description) {
             <p class="text-xs text-slate-400 mb-3">{{ model.description }}</p>
@@ -37,7 +45,7 @@
               </span>
             }
           </div>
-        </div>
+        </button>
       }
       @if (contentTypes().length === 0) {
         <div class="flex flex-col items-center justify-center flex-1 text-slate-500 gap-3 p-8">

@@ -31,6 +31,7 @@
     [show]="showModelsPanel()"
     [contentTypes]="contentfulService.contentTypes()"
     (closed)="showModelsPanel.set(false)"
+    (selected)="onSelectTemplate($event); showModelsPanel.set(false)"
   />
 
   <!-- Media Library Overlay Panel -->
